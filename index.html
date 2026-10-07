@@ -1,0 +1,1266 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tagbook Electrical Testing</title>
+<meta name="description" content="Test and tag logbook, electrical test certificates and RCD log.">
+<meta name="theme-color" content="#1B4FD6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tagbook">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>:root{color-scheme:light;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>
+/* Layout: single-column field logbook. Sticky header with an earth-wire stripe, fixed five-tab bar, every form in a bottom sheet. */
+:root{
+  --bg:#ECEFF3; --surface:#FFFFFF; --surface-2:#F3F5F8; --ink:#13202E; --ink-2:#506072; --line:#D3DAE3;
+  --accent:#1B4FD6; --on-accent:#FFFFFF; --accent-soft:#E2EAFD;
+  --pass:#12703F; --pass-soft:#DCF2E5; --fail:#B8261B; --fail-soft:#FBE2DF; --due:#8A5600; --due-soft:#FBEDC9;
+  --earth-g:#1E8C4E; --earth-y:#F3C81C;
+  --tag-red:#D2362D; --tag-green:#1F9D57; --tag-blue:#2561E8; --tag-yellow:#F3C81C; --tag-orange:#EF7F1A; --tag-white:#FFFFFF;
+  --tag-ink-dark:#13202E; --tag-ink-light:#FFFFFF; --paper:#FFFFFF;
+  --scrim:rgba(13,21,31,.5); --shadow:0 1px 2px rgba(19,32,46,.07),0 8px 24px rgba(19,32,46,.07);
+  --f-display:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --f-body:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --f-data:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0D151E; --surface:#16212D; --surface-2:#1C2937; --ink:#E7EDF4; --ink-2:#9DAEC1; --line:#2A3A4B;
+  --accent:#86A7FF; --on-accent:#0B1322; --accent-soft:#1B2B4E;
+  --pass:#62D49C; --pass-soft:#133526; --fail:#FF8D82; --fail-soft:#42201D; --due:#F1C05A; --due-soft:#3A2E11;
+  --scrim:rgba(0,0,0,.62); --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.28); color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0D151E; --surface:#16212D; --surface-2:#1C2937; --ink:#E7EDF4; --ink-2:#9DAEC1; --line:#2A3A4B;
+  --accent:#86A7FF; --on-accent:#0B1322; --accent-soft:#1B2B4E;
+  --pass:#62D49C; --pass-soft:#133526; --fail:#FF8D82; --fail-soft:#42201D; --due:#F1C05A; --due-soft:#3A2E11;
+  --scrim:rgba(0,0,0,.62); --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.28); color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.4;padding-inline:16px;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;letter-spacing:.01em;margin:0;text-wrap:balance;line-height:1.1}
+h1{font-size:30px;text-transform:uppercase}
+h2{font-size:21px;text-transform:uppercase}
+h3{font-size:17px;text-transform:uppercase;color:var(--ink-2);letter-spacing:.05em;margin-top:6px}
+p{margin:0}
+.muted{color:var(--ink-2)}
+.num{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+
+#app{max-width:760px;margin:0 auto;padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);margin-inline:-16px;padding:10px 16px 0}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:10px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:.06em;text-transform:uppercase}
+.brand .mark{width:30px;height:38px;border-radius:5px;background:var(--accent);position:relative;flex:none}
+.brand .mark::before{content:"";position:absolute;left:50%;top:5px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--bg)}
+.brand .mark::after{content:"";position:absolute;left:6px;right:6px;bottom:8px;height:10px;border-top:2px solid var(--on-accent);border-bottom:2px solid var(--on-accent)}
+.sync{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-2);text-align:right}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--pass);flex:none}
+.sync[data-s="saving"] i{background:var(--due)} .sync[data-s="local"] i{background:var(--due)} .sync[data-s="error"] i{background:var(--fail)}
+.stripe{height:5px;margin-inline:-16px;background:repeating-linear-gradient(115deg,var(--earth-g) 0 22px,var(--earth-y) 22px 32px)}
+
+main{display:flex;flex-direction:column;gap:16px;padding-top:18px}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.head p{font-size:15px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.banner{background:var(--due-soft);color:var(--ink);border-radius:10px;padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:15px}
+.banner.info{background:var(--accent-soft)}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:left;display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat b{font-family:var(--f-data);font-weight:600;font-size:28px;line-height:1.1}
+.stat span{font-size:13px;color:var(--ink-2);line-height:1.2}
+.stat.bad b{color:var(--fail)} .stat.warn b{color:var(--due)}
+@media (max-width:520px){ .stats{grid-template-columns:repeat(2,1fr)} }
+
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:520px){ .quick{grid-template-columns:1fr} }
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:11px 16px;font-weight:600;min-height:46px;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-align:center}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.danger{color:var(--fail)}
+.btn.small{min-height:36px;padding:6px 12px;font-size:14px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.link{background:none;border:0;padding:0;color:var(--accent);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.fab{position:fixed;z-index:6;right:max(16px,calc(50% - 364px));bottom:calc(84px + env(safe-area-inset-bottom,0px));box-shadow:var(--shadow);border-radius:28px;padding-inline:20px}
+
+.filters{display:flex;flex-direction:column;gap:10px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:20px;padding:7px 14px;font-size:14px;font-weight:600;min-height:38px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.group{font-family:var(--f-display);font-weight:700;font-size:16px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);margin-top:8px}
+.row{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;text-align:left;width:100%}
+.row .main{display:flex;flex-direction:column;gap:2px;min-width:0}
+.row .main b{font-weight:600;overflow-wrap:anywhere}
+.row .main span{font-size:14px;color:var(--ink-2);overflow-wrap:anywhere}
+.row .side{display:flex;flex-direction:column;align-items:flex-end;gap:4px;font-size:13px;color:var(--ink-2);white-space:nowrap}
+.tag{width:58px;min-height:44px;border-radius:6px 6px 6px 6px;padding:13px 4px 5px;position:relative;font-family:var(--f-data);font-size:11px;font-weight:600;text-align:center;line-height:1.15;overflow-wrap:anywhere;border:1px solid var(--line);background:var(--surface-2);color:var(--ink)}
+.tag::before{content:"";position:absolute;left:50%;top:4px;width:7px;height:7px;margin-left:-3.5px;border-radius:50%;background:var(--surface);border:1px solid var(--line)}
+.tag.red{background:var(--tag-red);color:var(--tag-ink-light);border-color:var(--tag-red)}
+.tag.green{background:var(--tag-green);color:var(--tag-ink-light);border-color:var(--tag-green)}
+.tag.blue{background:var(--tag-blue);color:var(--tag-ink-light);border-color:var(--tag-blue)}
+.tag.yellow{background:var(--tag-yellow);color:var(--tag-ink-dark);border-color:var(--tag-yellow)}
+.tag.orange{background:var(--tag-orange);color:var(--tag-ink-dark);border-color:var(--tag-orange)}
+.tag.white{background:var(--tag-white);color:var(--tag-ink-dark)}
+.pill{display:inline-flex;align-items:center;border-radius:20px;padding:3px 10px;font-size:13px;font-weight:600;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
+.pill.pass{background:var(--pass-soft);color:var(--pass)} .pill.fail{background:var(--fail-soft);color:var(--fail)} .pill.due{background:var(--due-soft);color:var(--due)}
+.pill.ex{background:var(--accent-soft);color:var(--accent)}
+
+.empty{border:1px dashed var(--line);border-radius:10px;padding:24px 16px;text-align:center;color:var(--ink-2);display:flex;flex-direction:column;gap:12px;align-items:center}
+.steps{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none;counter-reset:s}
+.steps li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;counter-increment:s}
+.steps li::before{content:counter(s);font-family:var(--f-data);font-weight:600;width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:14px}
+
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:7;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs div{max-width:760px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.tab{background:none;border:0;padding:8px 2px 9px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:600;color:var(--ink-2);min-height:60px;border-top:3px solid transparent}
+.tab svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab[aria-current="page"]{color:var(--accent);border-top-color:var(--accent)}
+
+dialog{border:0;padding:0;background:var(--surface);color:var(--ink);max-width:none}
+dialog::backdrop{background:var(--scrim)}
+.sheet{position:fixed;inset:auto 0 0 0;width:100%;max-width:680px;margin:0 auto;max-height:92%;border-radius:16px 16px 0 0;overflow:hidden}
+.sheet[open]{display:flex;flex-direction:column}
+.sheet header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);flex:none}
+.sheet .body{overflow-y:auto;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;-webkit-overflow-scrolling:touch}
+.x{border:0;background:var(--surface-2);width:40px;height:40px;border-radius:50%;font-size:22px;line-height:1;flex:none}
+@media (min-width:720px){ .sheet{inset:0;margin:auto;height:fit-content;border-radius:14px} }
+.confirm{margin:auto;border-radius:14px;width:min(420px,calc(100% - 32px));padding:20px}
+.confirm[open]{display:flex;flex-direction:column;gap:16px}
+.confirm div{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+form{display:flex;flex-direction:column;gap:14px}
+.fld{display:flex;flex-direction:column;gap:5px;min-width:0;border:0;padding:0;margin:0}
+.fld>span,.fld>legend{font-size:14px;font-weight:600;color:var(--ink-2);padding:0}
+.fld input,.fld select,.fld textarea{width:100%;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:10px 12px;min-height:46px;font-size:16px}
+.fld textarea{min-height:84px;resize:vertical}
+.fld .unit{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;border:1px solid var(--line);background:var(--surface-2);border-radius:8px}
+.fld .unit input{border:0;background:none;font-family:var(--f-data);outline:none}
+.fld .unit:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+.fld .unit em{font-style:normal;font-family:var(--f-data);font-size:14px;color:var(--ink-2);padding-right:12px}
+.fld small{font-size:13px;color:var(--ink-2)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:440px){ .row3{grid-template-columns:1fr 1fr} }
+.segrow{display:flex;gap:8px;flex-wrap:wrap}
+.segrow label{flex:1 1 0;min-width:72px;position:relative}
+.segrow input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.segrow span{display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;min-height:46px;padding:8px;font-weight:600;font-size:15px;text-align:center}
+.segrow input:checked+span{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.segrow label.p input:checked+span{background:var(--pass);border-color:var(--pass);color:var(--surface)}
+.segrow label.f input:checked+span{background:var(--fail);border-color:var(--fail);color:var(--surface)}
+.segrow input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.segrow input:disabled+span{opacity:.4}
+.sw{width:16px;height:16px;border-radius:4px;border:1px solid var(--line);flex:none}
+.quickvals{display:flex;gap:6px;flex-wrap:wrap}
+.quickvals button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:4px 9px;font-family:var(--f-data);font-size:13px;min-height:32px}
+.verdict{border-radius:8px;padding:10px 12px;font-size:15px;background:var(--surface-2);color:var(--ink-2)}
+.verdict.pass{background:var(--pass-soft);color:var(--pass)} .verdict.fail{background:var(--fail-soft);color:var(--fail)}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.actions .btn{flex:1 1 140px}
+.hint{font-size:14px;color:var(--ink-2)}
+.warn{font-size:14px;color:var(--fail);font-weight:600}
+
+.dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 16px;margin:0}
+.dl div{display:flex;flex-direction:column;gap:1px;min-width:0}
+.dl dt{font-size:13px;color:var(--ink-2)}
+.dl dd{margin:0;font-weight:500;overflow-wrap:anywhere}
+.readings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.reading{background:var(--surface-2);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:1px;min-width:0}
+.reading span{font-size:12px;color:var(--ink-2)}
+.reading b{font-family:var(--f-data);font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.hist{display:flex;flex-direction:column;gap:8px}
+.hist .h{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.hist .h .t{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.circuit{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
+.circuit .ch{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.menu{display:flex;flex-direction:column;gap:8px}
+.menu .row{grid-template-columns:minmax(0,1fr) auto}
+.pad{background:var(--paper);border:1px solid var(--line);border-radius:8px;width:100%;height:150px;touch-action:none;display:block}
+.logo{max-height:64px;max-width:200px;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:4px}
+.toast{pointer-events:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(100px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;font-size:15px;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
+@media (prefers-reduced-motion:no-preference){ .sheet[open]{animation:up .18s ease-out} @keyframes up{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}} }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top">
+    <div class="topbar">
+      <div class="brand"><span class="mark" aria-hidden="true"></span>Tagbook</div>
+      <div class="sync" id="sync" data-s="saving"><i></i><span>Opening your records</span></div>
+    </div>
+    <div class="stripe" aria-hidden="true"></div>
+  </div>
+  <main id="view"><div class="empty"><p>Opening your logbook.</p></div></main>
+</div>
+
+<nav class="tabs" aria-label="Sections"><div>
+  <button class="tab" data-act="tab" data-tab="home"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg>Home</button>
+  <button class="tab" data-act="tab" data-tab="tag"><svg viewBox="0 0 24 24"><path d="M7 3h10a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><circle cx="12" cy="7" r="1.4"/><path d="M9 13h6M9 16.5h6"/></svg>Test &amp; tag</button>
+  <button class="tab" data-act="tab" data-tab="certs"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12l2 2 4-4M9 17.5h6"/></svg>Certificates</button>
+  <button class="tab" data-act="tab" data-tab="rcd"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M12 7v5M9.5 16h5"/><circle cx="12" cy="12" r="0.4"/></svg>RCDs</button>
+  <button class="tab" data-act="tab" data-tab="more"><svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18.5" cy="12" r="1.3"/></svg>More</button>
+</div></nav>
+
+<dialog class="sheet" id="sheet" aria-labelledby="sheetTitle">
+  <header><h2 id="sheetTitle"></h2><button class="x" data-act="closeSheet" aria-label="Close">&times;</button></header>
+  <div class="body" id="sheetBody"></div>
+</dialog>
+<dialog class="confirm" id="confirm"><p id="confirmMsg"></p><div><button class="btn" data-act="confirmNo">Cancel</button><button class="btn primary" id="confirmOk" data-act="confirmYes">OK</button></div></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="pdf-lib.min.js"></script>
+<script>
+(() => {
+'use strict';
+
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const pad2 = n => String(n).padStart(2, '0');
+const iso = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const today = () => iso(new Date());
+const parseD = s => { const [y, m, d] = String(s).split('-').map(Number); return new Date(y, (m || 1) - 1, d || 1); };
+const validD = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+const addMonths = (s, n) => {
+  const d = parseD(s), day = d.getDate();
+  d.setDate(1); d.setMonth(d.getMonth() + Number(n));
+  d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
+  return iso(d);
+};
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fmt = s => { if (!validD(s)) return '—'; const d = parseD(s); return `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}`; };
+const daysTo = s => Math.round((parseD(s) - parseD(today())) / 864e5);
+const val = s => { const m = String(s ?? '').replace(',', '.').match(/\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
+const clone = o => JSON.parse(JSON.stringify(o));
+const byName = (a, b) => String(a.name).localeCompare(String(b.name));
+
+/* ---------- reference data ---------- */
+// Typical retest intervals in months. pf/pp = RCD push-button (fixed/portable, 0 = before each use), tf/tp = RCD trip-time test.
+const ENVS = [
+  { k: 'construction', n: 'Construction or demolition site', m: 3, pf: 1, pp: 0, tf: 12, tp: 3 },
+  { k: 'factory', n: 'Factory, workshop or manufacturing', m: 6, pf: 6, pp: 0, tf: 12, tp: 12 },
+  { k: 'cleaning', n: 'Commercial cleaning equipment', m: 6, pf: 6, pp: 0, tf: 6, tp: 6 },
+  { k: 'hostile', n: 'Cord flexes in use, or hostile area', m: 12, pf: 6, pp: 3, tf: 12, tp: 12 },
+  { k: 'office', n: 'Office or other non-hostile area', m: 60, pf: 6, pp: 3, tf: 24, tp: 24 },
+  { k: 'residential', n: 'Hotel, motel or accommodation', m: 24, pf: 6, pp: 6, tf: 24, tp: 24 },
+  { k: 'hire', n: 'Hire equipment', m: 3, pf: 3, pp: 0, tf: 12, tp: 12 },
+];
+const envOf = k => ENVS.find(e => e.k === k) || ENVS[3];
+const CLS = { I: 'Class I (earthed)', II: 'Class II (double insulated)', lead: 'Extension lead or cord set', board: 'Power board or EPOD' };
+const CLS_SHORT = { I: 'Class I', II: 'Class II', lead: 'Lead', board: 'Power board' };
+const TAGS = ['red', 'green', 'blue', 'yellow', 'orange', 'white'];
+const seasonTag = d => { const m = parseD(d).getMonth() + 1; return m === 12 || m <= 2 ? 'red' : m <= 5 ? 'green' : m <= 8 ? 'blue' : 'yellow'; };
+const CHECKS = [
+  { k: 'visual', n: 'Visual inspection' },
+  { k: 'earth', n: 'Earth continuity (main earth, bonding, protective earths)' },
+  { k: 'ir', n: 'Insulation resistance' },
+  { k: 'pol', n: 'Polarity' },
+  { k: 'conn', n: 'Correct circuit connections' },
+  { k: 'zs', n: 'Fault loop impedance' },
+  { k: 'rcd', n: 'RCD operation' },
+];
+const CERT_TITLE = { compliance: 'Certificate of Testing and Compliance', safety: 'Certificate of Testing and Safety', report: 'Electrical Test Report' };
+const CERT_SHORT = { compliance: 'Testing and compliance', safety: 'Testing and safety', report: 'Test report' };
+const CERT_HINT = {
+  compliance: 'For electrical installation work. Queensland wording. Issued by the licensed electrical contractor, who keeps a copy for at least 5 years.',
+  safety: 'For work on electrical equipment. Queensland wording. Issued by the licensed electrical contractor, who keeps a copy for at least 5 years.',
+  report: 'A record of test results only. It is not a statutory certificate and can be issued without a contractor licence number.',
+};
+const STATEMENT = {
+  compliance: 'I certify that the electrical installation described above, to the extent it is affected by the electrical work, has been tested to ensure it is electrically safe and is in accordance with the requirements of the wiring rules and any other standard applying to the electrical installation under the Electrical Safety Regulation 2013.',
+  safety: 'I certify that the electrical equipment described above, to the extent it is affected by the electrical work, has been tested and is electrically safe.',
+  report: 'The tests recorded above were carried out on the date shown using the instrument listed. This report records test results only. It is not a certificate of testing and compliance.',
+};
+const DEFAULTS = {
+  id: 'settings', biz: '', abn: '', addr: '', phone: '', email: '', contractorLic: '', tester: '', testerLic: '',
+  logo: '', sign: '', assetPrefix: 'TT-', certPrefix: 'CERT-', certNext: 1, instruments: [],
+  lim: { earth: 1, ir: 1, leak1: 5, leak2: 1, rcd30: 300, rcd10: 40 }, lastTag: 'white', lastEnv: 'hostile',
+};
+
+/* ---------- state ---------- */
+const S = { clients: [], items: [], rcds: [], certs: [], settings: clone(DEFAULTS), tab: 'home', sub: '', filter: { site: '', status: 'all', q: '' }, ready: false };
+let W = {};                       // working record for the open sheet
+const Cap = { downloads: null };
+
+/* ---------- storage: private per login in the cloud, this device only as a fallback ---------- */
+const Store = {
+  mode: 'loading', root: null, queue: {}, pending: 0, failed: false, lastLoad: 0,
+  async init() {
+    let db = null, user = null, id = null;
+    try {
+      if (window.claude && window.claude.use) {
+        [db, user, Cap.downloads] = await Promise.all([window.claude.use('db'), window.claude.use('user'), window.claude.use('downloads')]);
+      }
+      id = user ? await user.id() : null;
+    } catch (e) { /* fall through to local */ }
+    if (db && id) { this.root = db.doc(`data/users/${id}/tb`); this.mode = 'cloud'; } else this.mode = 'local';
+  },
+  coll(name) { return this.root.collection(name); },
+  async loadColl(name) {
+    if (this.mode === 'local') { try { return Object.values(JSON.parse(localStorage.getItem('tagbook:' + name) || '{}')); } catch (e) { return []; } }
+    const out = []; let last = null;
+    for (let i = 0; i < 60; i++) {
+      const q = last === null ? this.coll(name).orderBy('id').limit(500) : this.coll(name).where('id', '>', last).orderBy('id').limit(500);
+      const snap = await q.get();
+      snap.docs.forEach(d => { const v = d.data(); if (v && v.id) out.push(clone(v)); });
+      if (snap.size < 500 || !out.length) break;
+      last = out[out.length - 1].id;
+    }
+    return out;
+  },
+  async loadAll() {
+    const [clients, items, rcds, certs, meta] = await Promise.all(['clients', 'items', 'rcds', 'certs', 'meta'].map(n => this.loadColl(n)));
+    Object.assign(S, { clients, items, rcds, certs });
+    const st = meta.find(m => m.id === 'settings');
+    S.settings = Object.assign(clone(DEFAULTS), st || {});
+    S.settings.lim = Object.assign(clone(DEFAULTS.lim), (st && st.lim) || {});
+    this.lastLoad = Date.now();
+  },
+  write(name, id, data) {
+    if (this.mode === 'local') {
+      try {
+        const arr = name === 'meta' ? [S.settings] : S[name];
+        localStorage.setItem('tagbook:' + name, JSON.stringify(Object.fromEntries(arr.map(x => [x.id, x]))));
+      } catch (e) { this.failed = true; toast('This browser would not save that record.'); }
+      syncUI(); return;
+    }
+    const key = name + '/' + id, body = data === null ? null : clone(data), ref = this.coll(name).doc(id);
+    const run = () => (body === null ? ref.delete() : ref.set(body));
+    this.pending++; syncUI();
+    this.queue[key] = (this.queue[key] || Promise.resolve())
+      .then(run)
+      .catch(e => (e && e.code === 'unavailable' ? new Promise(r => setTimeout(r, 900 + Math.random() * 600)).then(run) : Promise.reject(e)))
+      .then(() => { this.failed = false; }, e => {
+        this.failed = true;
+        toast(e && e.code === 'quota_exceeded' ? 'Storage is full. Export a backup and remove old records.'
+          : e && e.code === 'invalid_argument' ? 'Not saved. This login can view the logbook but cannot add records.'
+          : 'Not saved. Check your connection and try again.');
+      })
+      .then(() => { this.pending--; syncUI(); });
+  },
+};
+function syncUI() {
+  const el = $('#sync'); if (!el) return;
+  const s = Store.failed ? 'error' : Store.pending ? 'saving' : Store.mode === 'local' ? 'local' : 'ok';
+  el.dataset.s = s;
+  el.lastElementChild.textContent = { error: 'Last change not saved', saving: 'Saving', local: 'Saved on this device only', ok: 'Saved to your account' }[s];
+}
+function save(name, obj) {
+  const arr = S[name], i = arr.findIndex(x => x.id === obj.id);
+  if (i < 0) arr.push(obj); else arr[i] = obj;
+  Store.write(name, obj.id, obj);
+}
+function remove(name, id) { S[name] = S[name].filter(x => x.id !== id); Store.write(name, id, null); }
+function saveSettings() { Store.write('meta', 'settings', S.settings); }
+
+/* ---------- lookups and rules ---------- */
+const clientOf = id => S.clients.find(c => c.id === id);
+function whereOf(r) {
+  const c = clientOf(r.clientId); if (!c) return 'No client';
+  const s = (c.sites || []).find(x => x.id === r.siteId);
+  return s ? `${c.name} · ${s.name}` : c.name;
+}
+const inSite = r => !S.filter.site || `${r.clientId}|${r.siteId}` === S.filter.site;
+function evalItem(cls, r, L) {
+  const fail = [], miss = [];
+  if (r.visual === 'fail') fail.push('visual inspection failed'); else if (r.visual !== 'pass') miss.push('visual inspection');
+  const e = val(r.earth), i = val(r.ir), k = val(r.leak), lk = cls === 'II' ? L.leak2 : L.leak1;
+  if (cls !== 'II') { if (e === null) miss.push('earth continuity'); else if (e > L.earth) fail.push(`earth continuity ${e} Ω is over ${L.earth} Ω`); }
+  if (i !== null && i < L.ir && !String(r.ir).includes('>')) fail.push(`insulation resistance ${i} MΩ is under ${L.ir} MΩ`);
+  if (k !== null && k > lk) fail.push(`leakage ${k} mA is over ${lk} mA`);
+  if (i === null && k === null) miss.push('insulation resistance or leakage current');
+  if (cls === 'lead' || cls === 'board') { if (r.polarity === 'fail') fail.push('polarity is wrong'); else if (r.polarity !== 'pass') miss.push('polarity'); }
+  return { fail, miss };
+}
+const rcdLimit = r => (Number(r.rating) <= 10 ? S.settings.lim.rcd10 : S.settings.lim.rcd30);
+function evalRcd(r, t) {
+  const fail = [], lim = rcdLimit(r), a = val(t.t0), b = val(t.t180);
+  if (t.push === 'fail') fail.push('push-button test failed');
+  if (t.noTrip) fail.push('did not trip');
+  [a, b].forEach(x => { if (x !== null && x > lim) fail.push(`trip time ${x} ms is over ${lim} ms`); });
+  const done = t.push === 'pass' || t.push === 'fail' || a !== null || b !== null || !!t.noTrip;
+  return { fail, done, timed: a !== null || b !== null || !!t.noTrip };
+}
+const rcdDue = r => [r.nextPush, r.nextTime].filter(validD).sort()[0] || '';
+function statusOf(status, due) {
+  if (status === 'fail') return { c: 'fail', t: 'Failed', rank: 0 };
+  if (status !== 'pass') return { c: '', t: 'Not tested', rank: 2 };
+  if (!validD(due)) return { c: 'pass', t: 'Pass', rank: 4 };
+  const d = daysTo(due);
+  if (d < 0) return { c: 'fail', t: `Overdue ${-d} d`, rank: 1 };
+  if (d <= 30) return { c: 'due', t: d === 0 ? 'Due today' : `Due in ${d} d`, rank: 3 };
+  return { c: 'pass', t: 'Pass', rank: 4 };
+}
+const itemStatus = i => statusOf(i.status, i.nextDue);
+const rcdStatus = r => statusOf(r.status, rcdDue(r));
+const isDue = st => st.rank === 1 || st.rank === 3;
+function nextAssetId() {
+  const p = S.settings.assetPrefix || '';
+  const n = S.items.reduce((m, i) => { const id = String(i.assetId || ''), x = id.startsWith(p) ? id.slice(p.length).match(/^(\d+)$/) : null; return x ? Math.max(m, Number(x[1])) : m; }, 0);
+  return p + String(n + 1).padStart(4, '0');
+}
+const certNumber = () => (S.settings.certPrefix || '') + String(S.settings.certNext || 1).padStart(4, '0');
+
+/* ---------- small UI pieces ---------- */
+let toastT;
+function toast(msg) {
+  const el = $('#toast'), host = $('#confirm').open ? $('#confirm') : $('#sheet').open ? $('#sheet') : document.body;
+  host.appendChild(el); el.textContent = msg; el.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 3800);
+}
+function openSheet(title, html) {
+  $('#sheetTitle').textContent = title; $('#sheetBody').innerHTML = html;
+  const d = $('#sheet'); if (!d.open) d.showModal(); $('#sheetBody').scrollTop = 0;
+}
+function closeSheet() { const d = $('#sheet'); if (d.open) d.close(); W = {}; }
+let confirmFn = null;
+function confirmBox(msg, ok, fn) { $('#confirmMsg').textContent = msg; $('#confirmOk').textContent = ok; confirmFn = fn; $('#confirm').showModal(); }
+const pill = st => `<span class="pill ${st.c}">${esc(st.t)}</span>`;
+const exPill = r => (r.example ? ' <span class="pill ex">Example</span>' : '');
+const tagChip = (colour, text) => `<span class="tag ${esc(colour || '')}">${esc(text)}</span>`;
+const F = {
+  text: (n, l, v = '', o = {}) => `<label class="fld"><span>${l}</span><input id="f-${n}" name="${n}" type="${o.type || 'text'}" value="${esc(v)}" ${o.attrs || ''}>${o.help ? `<small>${o.help}</small>` : ''}</label>`,
+  num: (n, l, v = '', unit = '', o = {}) => `<label class="fld"><span>${l}</span><span class="unit"><input id="f-${n}" name="${n}" type="text" inputmode="decimal" autocomplete="off" value="${esc(v)}"><em>${unit}</em></span>${o.help ? `<small>${o.help}</small>` : ''}${o.quick ? `<span class="quickvals">${o.quick.map(q => `<button type="button" data-act="quickVal" data-for="f-${n}" data-v="${esc(q)}">${esc(q)}</button>`).join('')}</span>` : ''}</label>`,
+  area: (n, l, v = '') => `<label class="fld"><span>${l}</span><textarea id="f-${n}" name="${n}">${esc(v)}</textarea></label>`,
+  select: (n, l, v, opts, attrs = '') => `<label class="fld"><span>${l}</span><select id="f-${n}" name="${n}" ${attrs}>${opts.map(([k, t]) => `<option value="${esc(k)}" ${String(k) === String(v ?? '') ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></label>`,
+  seg: (n, l, v, opts) => `<fieldset class="fld"><legend>${l}</legend><div class="segrow">${opts.map(([k, t, c]) => `<label class="${c || ''}"><input type="radio" name="${n}" id="f-${n}-${k || 'none'}" value="${esc(k)}" ${k === (v ?? '') ? 'checked' : ''}><span>${t}</span></label>`).join('')}</div></fieldset>`,
+};
+const PF = [['pass', 'Pass', 'p'], ['fail', 'Fail', 'f']];
+const formData = form => { const o = {}; new FormData(form).forEach((v, k) => { o[k] = typeof v === 'string' ? v.trim() : v; }); return o; };
+const formErr = (form, msg) => { const el = $('.err', form); if (el) { el.textContent = msg; el.hidden = !msg; if (msg) el.scrollIntoView({ block: 'nearest' }); } };
+const ERR = '<p class="warn err" role="alert" hidden></p>';
+
+function siteSelect(cid, sid) {
+  const only = S.clients.length === 1 && S.clients[0].sites.length === 1 ? `${S.clients[0].id}|${S.clients[0].sites[0].id}` : '';
+  const cur = cid && sid ? `${cid}|${sid}` : S.clients.length ? (S.filter.site || S.lastSite || only) : '__new';
+  let h = `<label class="fld"><span>Client and site</span><select id="f-site" name="site" data-change="siteSel">`;
+  if (S.clients.length) h += '<option value="">Choose a site</option>';
+  for (const c of [...S.clients].sort(byName)) {
+    h += `<optgroup label="${esc(c.name)}">` + (c.sites || []).map(s => `<option value="${c.id}|${s.id}" ${cur === `${c.id}|${s.id}` ? 'selected' : ''}>${esc(s.name)}</option>`).join('')
+      + `<option value="${c.id}|__new">Add a site for ${esc(c.name)}</option></optgroup>`;
+  }
+  h += `<option value="__new" ${cur === '__new' ? 'selected' : ''}>Add a new client</option></select></label>
+  <div class="row2" id="newSite" ${cur === '__new' ? '' : 'hidden'}>
+    <label class="fld" id="newClientWrap"><span>Client name</span><input id="f-newClient" name="newClient"></label>
+    <label class="fld"><span>Site name</span><input id="f-newSite" name="newSite" placeholder="Main workshop"></label></div>`;
+  return h;
+}
+function resolveSite(fd) { const r = pickSite(fd); if (r) S.lastSite = `${r.clientId}|${r.siteId}`; return r; }
+function pickSite(fd) {
+  const v = fd.site || '';
+  if (!v) return null;
+  if (v === '__new') {
+    if (!fd.newClient) return null;
+    const c = { id: uid(), name: fd.newClient, contact: '', phone: '', email: '', address: '', notes: '', sites: [{ id: uid(), name: fd.newSite || 'Main site', address: '' }] };
+    save('clients', c); return { clientId: c.id, siteId: c.sites[0].id };
+  }
+  const [cid, sid] = v.split('|');
+  if (sid === '__new') {
+    const c = clientOf(cid); if (!c || !fd.newSite) return null;
+    const s = { id: uid(), name: fd.newSite, address: '' }; c.sites.push(s); save('clients', c);
+    return { clientId: cid, siteId: s.id };
+  }
+  return { clientId: cid, siteId: sid };
+}
+function siteFilter() {
+  let h = `<label class="fld"><span>Site</span><select id="flt-site" data-change="fltSite"><option value="">All clients and sites</option>`;
+  for (const c of [...S.clients].sort(byName)) h += `<optgroup label="${esc(c.name)}">` + (c.sites || []).map(s => `<option value="${c.id}|${s.id}" ${S.filter.site === `${c.id}|${s.id}` ? 'selected' : ''}>${esc(s.name)}</option>`).join('') + '</optgroup>';
+  return h + '</select></label>';
+}
+
+/* ---------- views ---------- */
+function render() {
+  document.querySelectorAll('.tab').forEach(b => { if (b.dataset.tab === S.tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  if (!S.ready) return;
+  $('#view').innerHTML = ({ home: vHome, tag: vTag, certs: vCerts, rcd: vRcd, more: vMore }[S.tab])();
+  if (S.tab === 'tag') tagList();
+  if (S.tab === 'more' && S.sub === 'business') initPad();
+}
+function dueRows() {
+  const out = [];
+  S.items.forEach(i => { const st = itemStatus(i); if (st.rank !== 4 && st.rank !== 2) out.push({ act: 'openItem', id: i.id, st, due: i.nextDue, title: i.desc, sub: `${i.assetId} · ${whereOf(i)}`, tag: tagChip(i.tagColour, i.assetId) }); });
+  S.rcds.forEach(r => { const st = rcdStatus(r); if (st.rank !== 4 && st.rank !== 2) out.push({ act: 'openRcd', id: r.id, st, due: rcdDue(r), title: `${r.ref} · ${r.rating} mA RCD`, sub: `${r.board || 'RCD'} · ${whereOf(r)}`, tag: tagChip('', 'RCD') }); });
+  return out.sort((a, b) => a.st.rank - b.st.rank || String(a.due).localeCompare(String(b.due)));
+}
+function vHome() {
+  const rows = dueRows(), total = S.items.length + S.rcds.length + S.certs.length;
+  const overdue = rows.filter(r => r.st.rank === 1).length, soon = rows.filter(r => r.st.rank === 3).length, failed = rows.filter(r => r.st.rank === 0).length;
+  const drafts = S.certs.filter(c => c.status !== 'issued').length;
+  const hasEx = ['clients', 'items', 'rcds', 'certs'].some(n => S[n].some(x => x.example));
+  let h = `<div class="head"><div><h1>Today</h1><p class="muted">${fmt(today())}</p></div></div>`;
+  if (Store.mode === 'local') h += `<div class="banner"><span>Records are saved in this browser on this device only. Keep your own copy with a backup file.</span><button class="btn small" data-act="sub" data-sub="data">Back up</button></div>`;
+  if (hasEx) h += `<div class="banner info"><span>The records marked Example are samples so you can see how the logbook works.</span><button class="btn small" data-act="clearExamples">Remove examples</button></div>`;
+  h += `<div class="stats">
+    <button class="stat ${overdue ? 'bad' : ''}" data-act="goDue"><b>${overdue}</b><span>Overdue for retest</span></button>
+    <button class="stat ${soon ? 'warn' : ''}" data-act="goDue"><b>${soon}</b><span>Due in 30 days</span></button>
+    <button class="stat ${failed ? 'bad' : ''}" data-act="goFailed"><b>${failed}</b><span>Failed, out of service</span></button>
+    <button class="stat" data-act="tab" data-tab="certs"><b>${drafts}</b><span>Draft certificates</span></button></div>
+  <div class="quick">
+    <button class="btn primary" data-act="newItem">Test an appliance</button>
+    <button class="btn" data-act="newCert">New certificate</button>
+    <button class="btn" data-act="newRcd">Log an RCD</button></div>`;
+  if (!total) {
+    h += `<div class="card"><h2>Set up your logbook</h2><ol class="steps">
+      <li><span><b>Add your business and licence details.</b> They go on every certificate and report.<br><button class="link" data-act="sub" data-sub="business">Open business details</button></span></li>
+      <li><span><b>Test your first appliance.</b> Add the client and site as you go, enter the readings, and the retest date is worked out for you.</span></li>
+      <li><span><b>Issue a certificate.</b> Fill in the circuits, sign it and download the PDF for your customer.</span></li></ol></div>`;
+  } else if (!rows.length) {
+    h += `<div class="empty"><p><b>Nothing needs attention.</b><br>Anything overdue, due within 30 days or failed will show here.</p></div>`;
+  } else {
+    h += `<h2>Needs attention</h2><div class="list">` + rows.slice(0, 40).map(r => `<button class="row" data-act="${r.act}" data-id="${r.id}">${r.tag}<span class="main"><b>${esc(r.title)}</b><span>${esc(r.sub)}</span></span><span class="side">${pill(r.st)}<span class="num">${validD(r.due) ? fmt(r.due) : ''}</span></span></button>`).join('') + '</div>';
+    if (rows.length > 40) h += `<p class="muted">And ${rows.length - 40} more. Open Test &amp; tag and choose Due to see them all.</p>`;
+  }
+  return h;
+}
+function vTag() {
+  const f = S.filter, chips = [['all', 'All'], ['due', 'Due'], ['fail', 'Failed'], ['untested', 'Not tested']];
+  return `<div class="head"><div><h1>Test &amp; tag</h1><p class="muted" id="tagCount"></p></div></div>
+  <div class="filters">${siteFilter()}
+    <label class="fld"><span>Search</span><input id="flt-q" type="search" placeholder="Asset ID, description, location or serial" value="${esc(f.q)}" data-input="fltQ"></label>
+    <div class="chips">${chips.map(([k, t]) => `<button class="chip" data-act="fltStatus" data-v="${k}" aria-pressed="${f.status === k}">${t}</button>`).join('')}</div></div>
+  <div id="tagTools" class="actions"></div><div class="list" id="tagList"></div>
+  <button class="btn primary fab" data-act="newItem">+ Appliance</button>`;
+}
+function filteredItems() {
+  const f = S.filter, q = f.q.toLowerCase();
+  return S.items.filter(i => inSite(i)).map(i => ({ i, st: itemStatus(i) }))
+    .filter(({ i, st }) => f.status === 'all' || (f.status === 'due' && isDue(st)) || (f.status === 'fail' && st.rank === 0) || (f.status === 'untested' && st.rank === 2))
+    .filter(({ i }) => !q || [i.assetId, i.desc, i.location, i.serial, i.make].some(x => String(x || '').toLowerCase().includes(q)))
+    .sort((a, b) => a.st.rank - b.st.rank || String(a.i.nextDue || '9').localeCompare(String(b.i.nextDue || '9')) || String(a.i.assetId).localeCompare(String(b.i.assetId), undefined, { numeric: true }));
+}
+function tagList() {
+  const el = $('#tagList'); if (!el) return;
+  const rows = filteredItems();
+  $('#tagCount').textContent = `${rows.length} of ${S.items.length} appliance${S.items.length === 1 ? '' : 's'}`;
+  $('#tagTools').innerHTML = S.items.length ? `<button class="btn small" data-act="sitePdf">${S.filter.site ? 'Site report PDF' : 'Register PDF'}</button><button class="btn small" data-act="csvItems">Logbook CSV</button>` : '';
+  if (!S.items.length) { el.innerHTML = `<div class="empty"><p><b>No appliances logged yet.</b><br>Add one, enter the readings and it gets a pass or fail and a retest date.</p><button class="btn primary" data-act="newItem">Test an appliance</button></div>`; return; }
+  if (!rows.length) { el.innerHTML = `<div class="empty"><p>No appliances match these filters.</p><button class="btn small" data-act="fltClear">Clear filters</button></div>`; return; }
+  el.innerHTML = rows.slice(0, 300).map(({ i, st }) => `<button class="row" data-act="openItem" data-id="${i.id}">${tagChip(i.tagColour, i.assetId)}<span class="main"><b>${esc(i.desc)}${exPill(i)}</b><span>${esc([i.location, whereOf(i)].filter(Boolean).join(' · '))}</span></span><span class="side">${pill(st)}<span class="num">${validD(i.nextDue) ? fmt(i.nextDue) : ''}</span></span></button>`).join('')
+    + (rows.length > 300 ? `<p class="muted">Showing the first 300. Narrow the list with a site or search.</p>` : '');
+}
+function vCerts() {
+  const list = [...S.certs].sort((a, b) => String(b.dateTested).localeCompare(String(a.dateTested)) || String(b.number).localeCompare(String(a.number)));
+  let h = `<div class="head"><div><h1>Certificates</h1><p class="muted">${list.length} on file</p></div></div>`;
+  if (!list.length) h += `<div class="empty"><p><b>No certificates yet.</b><br>Record the tests for a job, sign it off and download a PDF to give your customer.</p><button class="btn primary" data-act="newCert">New certificate</button></div>`;
+  else h += `<div class="list">` + list.map(c => `<button class="row" data-act="openCert" data-id="${c.id}">${tagChip('', c.number)}<span class="main"><b>${esc(c.clientName || 'No name yet')}${exPill(c)}</b><span>${esc([CERT_SHORT[c.type], c.siteAddress].filter(Boolean).join(' · '))}</span></span><span class="side"><span class="pill ${c.status === 'issued' ? 'pass' : 'due'}">${c.status === 'issued' ? 'Issued' : 'Draft'}</span><span class="num">${fmt(c.dateTested)}</span></span></button>`).join('') + '</div>';
+  return h + `<button class="btn primary fab" data-act="newCert">+ Certificate</button>`;
+}
+function vRcd() {
+  const list = S.rcds.filter(inSite).map(r => ({ r, st: rcdStatus(r) })).sort((a, b) => a.st.rank - b.st.rank || String(rcdDue(a.r) || '9').localeCompare(String(rcdDue(b.r) || '9')));
+  let h = `<div class="head"><div><h1>RCD log</h1><p class="muted">${list.length} of ${S.rcds.length} RCD${S.rcds.length === 1 ? '' : 's'}</p></div></div>`;
+  if (S.rcds.length) h += `<div class="filters">${siteFilter()}</div><div class="actions"><button class="btn small" data-act="csvRcds">RCD log CSV</button></div>`;
+  if (!S.rcds.length) h += `<div class="empty"><p><b>No RCDs logged yet.</b><br>Add each safety switch once, then record its push-button and trip-time tests.</p><button class="btn primary" data-act="newRcd">Log an RCD</button></div>`;
+  else if (!list.length) h += `<div class="empty"><p>No RCDs at this site.</p></div>`;
+  else h += `<div class="list">` + list.map(({ r, st }) => { const lt = (r.tests || [])[0]; const ms = lt ? [lt.t0, lt.t180].filter(x => x !== '' && x != null).join(' / ') : ''; return `<button class="row" data-act="openRcd" data-id="${r.id}">${tagChip('', `${r.rating}mA`)}<span class="main"><b>${esc(r.ref)}${exPill(r)}</b><span>${esc([r.board, whereOf(r)].filter(Boolean).join(' · '))}</span></span><span class="side">${pill(st)}<span class="num">${ms ? esc(ms) + ' ms' : ''}</span></span></button>`; }).join('') + '</div>';
+  return h + `<button class="btn primary fab" data-act="newRcd">+ RCD</button>`;
+}
+
+/* ---------- More: clients, business, instruments, limits, data ---------- */
+function vMore() {
+  const back = `<button class="link" data-act="sub" data-sub="">Back to More</button>`;
+  const s = S.settings;
+  if (S.sub === 'clients') {
+    return `${back}<div class="head"><h1>Clients and sites</h1><button class="btn primary small" data-act="newClient">+ Client</button></div>`
+      + (S.clients.length ? `<div class="menu">` + [...S.clients].sort(byName).map(c => `<button class="row" data-act="openClient" data-id="${c.id}"><span class="main"><b>${esc(c.name)}${exPill(c)}</b><span>${esc((c.sites || []).map(x => x.name).join(', '))}</span></span><span class="side">${S.items.filter(i => i.clientId === c.id).length} appliances</span></button>`).join('') + '</div>'
+        : `<div class="empty"><p>No clients yet. You can also add them while logging a test.</p></div>`);
+  }
+  if (S.sub === 'business') {
+    return `${back}<h1>Business details</h1><p class="muted">These print at the top of every certificate and report.</p>
+    <form class="card" data-submit="business">
+      ${F.text('biz', 'Business name', s.biz)}
+      <div class="row2">${F.text('abn', 'ABN', s.abn)}${F.text('contractorLic', 'Electrical contractor licence no.', s.contractorLic)}</div>
+      ${F.text('addr', 'Business address', s.addr)}
+      <div class="row2">${F.text('phone', 'Phone', s.phone, { type: 'tel' })}${F.text('email', 'Email', s.email, { type: 'email' })}</div>
+      <div class="row2">${F.text('tester', 'Your name (tester)', s.tester)}${F.text('testerLic', 'Your electrical work licence no.', s.testerLic)}</div>
+      ${ERR}<div class="actions"><button class="btn primary">Save details</button></div></form>
+    <div class="card"><h2>Logo</h2>${s.logo ? `<img class="logo" src="${esc(s.logo)}" alt="Your logo">` : '<p class="muted">No logo added.</p>'}
+      <div class="actions"><label class="btn small" for="logoFile">Choose image</label><input id="logoFile" type="file" accept="image/png,image/jpeg" data-change="logo" hidden>${s.logo ? '<button class="btn small danger" data-act="clearLogo">Remove</button>' : ''}</div></div>
+    <div class="card"><h2>Signature</h2><p class="muted">Sign with your finger or mouse. It prints on issued certificates.</p>
+      <canvas class="pad" id="pad" width="600" height="200" style="aspect-ratio:3/1;height:auto"></canvas>
+      <div class="actions"><button class="btn small" data-act="clearSign">Clear signature</button></div></div>`;
+  }
+  if (S.sub === 'instruments') {
+    return `${back}<div class="head"><h1>Test instruments</h1><button class="btn primary small" data-act="newInst">+ Instrument</button></div>`
+      + (s.instruments.length ? `<div class="menu">` + s.instruments.map(i => { const od = validD(i.cal) && daysTo(i.cal) < 0; return `<button class="row" data-act="openInst" data-id="${i.id}"><span class="main"><b>${esc(i.name)}</b><span>Serial ${esc(i.serial || 'not recorded')}</span></span><span class="side"><span class="pill ${od ? 'fail' : validD(i.cal) ? 'pass' : ''}">${validD(i.cal) ? (od ? 'Calibration overdue' : 'Calibrated') : 'No cal date'}</span><span class="num">${validD(i.cal) ? fmt(i.cal) : ''}</span></span></button>`; }).join('') + '</div>'
+        : `<div class="empty"><p>Add your tester so its make, serial number and calibration date are recorded against each test.</p></div>`);
+  }
+  if (S.sub === 'limits') {
+    const L = s.lim;
+    return `${back}<h1>Limits and numbering</h1><p class="muted">Pass limits and retest intervals are pre-filled with the usual AS/NZS 3760 and AS/NZS 3012 values. Check them against your copy of the standard and your state's rules before relying on them.</p>
+    <form class="card" data-submit="limits">
+      <h3>Test and tag pass limits</h3>
+      <div class="row2">${F.num('earth', 'Earth continuity, max', L.earth, 'Ω')}${F.num('ir', 'Insulation resistance, min', L.ir, 'MΩ')}</div>
+      <div class="row2">${F.num('leak1', 'Leakage, Class I max', L.leak1, 'mA')}${F.num('leak2', 'Leakage, Class II max', L.leak2, 'mA')}</div>
+      <h3>RCD trip time limits</h3>
+      <div class="row2">${F.num('rcd30', '30 mA RCD, max', L.rcd30, 'ms')}${F.num('rcd10', '10 mA RCD, max', L.rcd10, 'ms')}</div>
+      <h3>Numbering</h3>
+      <div class="row3">${F.text('assetPrefix', 'Asset ID prefix', s.assetPrefix)}${F.text('certPrefix', 'Certificate prefix', s.certPrefix)}${F.num('certNext', 'Next certificate no.', s.certNext, '')}</div>
+      ${ERR}<div class="actions"><button class="btn primary">Save</button></div></form>
+    <div class="card"><h2>Retest intervals used</h2><div class="hist">${ENVS.map(e => `<div class="h"><div class="t"><b>${e.n}</b><span class="num">${e.m} months</span></div><span class="muted">RCD push-button: fixed ${e.pf} months, portable ${e.pp ? e.pp + ' months' : 'before each use'}. Trip time: fixed ${e.tf}, portable ${e.tp} months.</span></div>`).join('')}</div><p class="hint">You can change the interval on any appliance or RCD.</p></div>`;
+  }
+  if (S.sub === 'data') {
+    const tests = S.items.reduce((n, i) => n + (i.tests || []).length, 0) + S.rcds.reduce((n, r) => n + (r.tests || []).length, 0);
+    return `${back}<h1>Your data</h1>
+    <div class="card"><dl class="dl"><div><dt>Clients</dt><dd class="num">${S.clients.length}</dd></div><div><dt>Appliances</dt><dd class="num">${S.items.length}</dd></div><div><dt>RCDs</dt><dd class="num">${S.rcds.length}</dd></div><div><dt>Test records</dt><dd class="num">${tests}</dd></div><div><dt>Certificates</dt><dd class="num">${S.certs.length}</dd></div><div><dt>Stored</dt><dd>${Store.mode === 'cloud' ? 'In your account, private to your login' : 'In this browser only'}</dd></div></dl></div>
+    <div class="card"><h2>Exports</h2><p class="muted">Keep your own copy. Certificates need to be kept for at least 5 years.</p>
+      <div class="actions"><button class="btn" data-act="csvItems">Test and tag logbook CSV</button><button class="btn" data-act="csvRcds">RCD log CSV</button><button class="btn" data-act="backup">Full backup file</button></div></div>
+    <div class="card"><h2>Restore</h2><p class="muted">Load a Tagbook backup file, for example when you move to a new phone. Records with the same ID are replaced, everything else is kept.</p>
+      <div class="actions"><label class="btn" for="restoreFile">Choose a backup file</label><input id="restoreFile" type="file" accept="application/json,.json" data-change="restore" hidden></div></div>`;
+  }
+  const row = (sub, t, d) => `<button class="row" data-act="sub" data-sub="${sub}"><span class="main"><b>${t}</b><span>${d}</span></span><span class="side">Open</span></button>`;
+  return `<div class="head"><h1>More</h1></div><div class="menu">
+    ${row('clients', 'Clients and sites', `${S.clients.length} client${S.clients.length === 1 ? '' : 's'}`)}
+    ${row('business', 'Business details', s.biz ? esc(s.biz) : 'Name, licence numbers, logo and signature')}
+    ${row('instruments', 'Test instruments', `${s.instruments.length} recorded`)}
+    ${row('limits', 'Limits and numbering', 'Pass limits, retest intervals, ID prefixes')}
+    ${row('data', 'Your data', 'Exports and backup')}</div>
+  <p class="hint">Tagbook records what you enter. The person testing is responsible for the readings, the result and compliance with the standards that apply.</p>`;
+}
+
+/* ---------- appliances ---------- */
+function itemForm(i) {
+  const isNew = !S.items.some(x => x.id === i.id);
+  return `<form data-submit="item">
+    ${siteSelect(i.clientId, i.siteId)}
+    <div class="row2">${F.text('assetId', 'Asset ID', i.assetId)}${F.text('location', 'Location', i.location, { attrs: 'placeholder="Workshop bench 2"' })}</div>
+    ${F.text('desc', 'Appliance', i.desc, { attrs: 'placeholder="Angle grinder 125 mm"' })}
+    <div class="row2">${F.text('make', 'Make and model', i.make)}${F.text('serial', 'Serial no.', i.serial)}</div>
+    ${F.select('cls', 'Type', i.cls, Object.entries(CLS))}
+    ${F.select('env', 'Where it is used', i.env, ENVS.map(e => [e.k, `${e.n} (${e.m} months)`]), 'data-change="envSel"')}
+    ${F.num('interval', 'Retest every', i.interval, 'months')}
+    ${ERR}<div class="actions">${isNew ? '<button class="btn primary" name="go" value="test">Save and test now</button><button class="btn" name="go" value="save">Save only</button>' : '<button class="btn primary" name="go" value="save">Save changes</button>'}</div></form>`;
+}
+function readingsHtml(t, cls) {
+  const cell = (l, v, u) => `<div class="reading"><span>${l}</span><b>${v === '' || v == null ? '—' : esc(v) + (u ? ' ' + u : '')}</b></div>`;
+  return `<div class="readings">${cell('Visual', t.visual === 'pass' ? 'Pass' : t.visual === 'fail' ? 'Fail' : '')}${cls !== 'II' ? cell('Earth', t.earth, 'Ω') : ''}${cell('Insulation', t.ir, 'MΩ')}${cell('Leakage', t.leak, 'mA')}${cls === 'lead' || cls === 'board' ? cell('Polarity', t.polarity === 'pass' ? 'Correct' : t.polarity === 'fail' ? 'Wrong' : '') : ''}</div>`;
+}
+function itemDetail(i) {
+  const st = itemStatus(i), tests = i.tests || [];
+  return `<div class="row" style="border:0;padding:0">${tagChip(i.tagColour, i.assetId)}<span class="main"><b>${esc(i.desc)}${exPill(i)}</b><span>${esc(whereOf(i))}</span></span><span class="side">${pill(st)}</span></div>
+  <div class="actions"><button class="btn primary" data-act="testItem" data-id="${i.id}">Record a test</button><button class="btn" data-act="editItem" data-id="${i.id}">Edit</button></div>
+  <dl class="dl"><div><dt>Location</dt><dd>${esc(i.location || '—')}</dd></div><div><dt>Type</dt><dd>${esc(CLS[i.cls] || '—')}</dd></div>
+    <div><dt>Make and model</dt><dd>${esc(i.make || '—')}</dd></div><div><dt>Serial no.</dt><dd>${esc(i.serial || '—')}</dd></div>
+    <div><dt>Used in</dt><dd>${esc(envOf(i.env).n)}</dd></div><div><dt>Retest every</dt><dd class="num">${esc(i.interval)} months</dd></div>
+    <div><dt>Last tested</dt><dd class="num">${fmt(i.lastTest)}</dd></div><div><dt>Retest due</dt><dd class="num">${fmt(i.nextDue)}</dd></div></dl>
+  <h3>Test history</h3>
+  ${tests.length ? `<div class="hist">` + tests.map(t => `<div class="h"><div class="t"><b class="num">${fmt(t.date)}</b><span class="pill ${t.result}">${t.result === 'pass' ? 'Pass' : 'Fail'}</span></div>${readingsHtml(t, i.cls)}<span class="muted">${esc([t.tester && 'Tested by ' + t.tester, t.instrument, t.tag && t.tag[0].toUpperCase() + t.tag.slice(1) + ' tag', t.action, t.notes].filter(Boolean).join(' · '))}</span></div>`).join('') + '</div>' : '<p class="muted">No tests recorded yet.</p>'}
+  <button class="btn danger small" data-act="delItem" data-id="${i.id}">Delete this appliance</button>`;
+}
+function testForm(i) {
+  const s = S.settings, d = today(), tag = i.env === 'construction' ? seasonTag(d) : (s.lastTag || 'white');
+  const pol = i.cls === 'lead' || i.cls === 'board';
+  return `<p class="muted"><b>${esc(i.assetId)}</b> ${esc(i.desc)} · ${esc(CLS_SHORT[i.cls])}</p>
+  <form data-submit="itemTest" data-live="itemTest">
+    ${F.text('date', 'Date tested', d, { type: 'date' })}
+    ${F.seg('visual', 'Visual inspection', 'pass', PF)}
+    ${i.cls !== 'II' ? F.num('earth', 'Earth continuity', '', 'Ω', { help: `Pass at ${s.lim.earth} Ω or less` }) : ''}
+    <div class="row2">${F.num('ir', 'Insulation resistance', '', 'MΩ', { help: `Pass at ${s.lim.ir} MΩ or more`, quick: ['>99', '>200', '>999'] })}${F.num('leak', 'Leakage current', '', 'mA', { help: `Pass at ${i.cls === 'II' ? s.lim.leak2 : s.lim.leak1} mA or less` })}</div>
+    ${pol ? F.seg('polarity', 'Polarity', '', [['pass', 'Correct', 'p'], ['fail', 'Wrong', 'f']]) : ''}
+    <div class="verdict" id="verdict">Enter the readings to get a result.</div>
+    ${F.seg('result', 'Result', '', PF)}
+    <fieldset class="fld"><legend>Tag colour</legend><div class="segrow">${TAGS.map(c => `<label><input type="radio" name="tag" id="f-tag-${c}" value="${c}" ${c === tag ? 'checked' : ''}><span><i class="sw" style="background:var(--tag-${c})"></i>${c[0].toUpperCase() + c.slice(1)}</span></label>`).join('')}</div></fieldset>
+    ${F.text('nextDue', 'Retest due', addMonths(d, i.interval), { type: 'date', help: `${i.interval} months from the test date. Change it if you need to.` })}
+    <div class="row2">${F.text('tester', 'Tested by', s.tester)}${F.select('instrument', 'Instrument', (s.instruments[0] || {}).name || '', [['', 'Not recorded'], ...s.instruments.map(x => [x.name + (x.serial ? ' s/n ' + x.serial : ''), x.name])])}</div>
+    ${F.select('action', 'If it failed, what happened to it', '', [['', 'Not applicable'], ['Removed from service and tagged out', 'Removed from service and tagged out'], ['Sent for repair', 'Sent for repair'], ['Disposed of', 'Disposed of'], ['Returned to owner as failed', 'Returned to owner as failed']])}
+    ${F.area('notes', 'Notes', '')}
+    ${ERR}<div class="actions"><button class="btn primary" name="go" value="next">Save and add next appliance</button><button class="btn" name="go" value="save">Save</button></div></form>`;
+}
+
+/* ---------- RCDs ---------- */
+function rcdForm(r) {
+  return `<form data-submit="rcd">
+    ${siteSelect(r.clientId, r.siteId)}
+    <div class="row2">${F.text('ref', 'RCD name or number', r.ref, { attrs: 'placeholder="RCD 3"' })}${F.text('board', 'Switchboard or location', r.board, { attrs: 'placeholder="DB1 workshop"' })}</div>
+    ${F.text('circuit', 'Circuits it protects', r.circuit)}
+    <div class="row2">${F.select('rating', 'Rated trip current', r.rating, [['10', '10 mA'], ['30', '30 mA'], ['100', '100 mA'], ['300', '300 mA']])}${F.select('kind', 'Fixed or portable', r.kind, [['fixed', 'Fixed'], ['portable', 'Portable']], 'data-change="envSel"')}</div>
+    ${F.select('env', 'Where it is used', r.env, ENVS.map(e => [e.k, e.n]), 'data-change="envSel"')}
+    <div class="row2">${F.num('pushMonths', 'Push-button test every', r.pushMonths, 'months', { help: '0 means before each use' })}${F.num('timeMonths', 'Trip-time test every', r.timeMonths, 'months')}</div>
+    ${ERR}<div class="actions"><button class="btn primary" name="go" value="${S.rcds.some(x => x.id === r.id) ? 'save' : 'test'}">${S.rcds.some(x => x.id === r.id) ? 'Save changes' : 'Save and test now'}</button></div></form>`;
+}
+function rcdDetail(r) {
+  const tests = r.tests || [];
+  return `<div class="row" style="border:0;padding:0">${tagChip('', r.rating + 'mA')}<span class="main"><b>${esc(r.ref)}${exPill(r)}</b><span>${esc(whereOf(r))}</span></span><span class="side">${pill(rcdStatus(r))}</span></div>
+  <div class="actions"><button class="btn primary" data-act="testRcd" data-id="${r.id}">Record a test</button><button class="btn" data-act="editRcd" data-id="${r.id}">Edit</button></div>
+  <dl class="dl"><div><dt>Switchboard or location</dt><dd>${esc(r.board || '—')}</dd></div><div><dt>Circuits</dt><dd>${esc(r.circuit || '—')}</dd></div>
+    <div><dt>Type</dt><dd>${r.kind === 'portable' ? 'Portable' : 'Fixed'}, ${esc(r.rating)} mA</dd></div><div><dt>Trip time limit</dt><dd class="num">${rcdLimit(r)} ms</dd></div>
+    <div><dt>Push-button due</dt><dd class="num">${Number(r.pushMonths) ? fmt(r.nextPush) : 'Before each use'}</dd></div><div><dt>Trip-time test due</dt><dd class="num">${fmt(r.nextTime)}</dd></div></dl>
+  <h3>Test history</h3>
+  ${tests.length ? `<div class="hist">` + tests.map(t => `<div class="h"><div class="t"><b class="num">${fmt(t.date)}</b><span class="pill ${t.result}">${t.result === 'pass' ? 'Pass' : 'Fail'}</span></div><div class="readings"><div class="reading"><span>Push-button</span><b>${t.push === 'pass' ? 'Pass' : t.push === 'fail' ? 'Fail' : '—'}</b></div><div class="reading"><span>Trip at 0°</span><b>${t.noTrip ? 'No trip' : t.t0 ? esc(t.t0) + ' ms' : '—'}</b></div><div class="reading"><span>Trip at 180°</span><b>${t.noTrip ? 'No trip' : t.t180 ? esc(t.t180) + ' ms' : '—'}</b></div></div><span class="muted">${esc([t.tester && 'Tested by ' + t.tester, t.instrument, t.notes].filter(Boolean).join(' · '))}</span></div>`).join('') + '</div>' : '<p class="muted">No tests recorded yet.</p>'}
+  <button class="btn danger small" data-act="delRcd" data-id="${r.id}">Delete this RCD</button>`;
+}
+function rcdTestForm(r) {
+  const s = S.settings;
+  return `<p class="muted"><b>${esc(r.ref)}</b> · ${esc(r.rating)} mA ${r.kind === 'portable' ? 'portable' : 'fixed'} · limit ${rcdLimit(r)} ms</p>
+  <form data-submit="rcdTest" data-live="rcdTest">
+    ${F.text('date', 'Date tested', today(), { type: 'date' })}
+    ${F.seg('push', 'Push-button test', '', [['pass', 'Pass', 'p'], ['fail', 'Fail', 'f'], ['', 'Not done']])}
+    <div class="row2">${F.num('t0', 'Trip time at 0°', '', 'ms')}${F.num('t180', 'Trip time at 180°', '', 'ms')}</div>
+    <label class="fld" style="flex-direction:row;align-items:center;gap:10px"><input type="checkbox" id="f-noTrip" name="noTrip" value="1" style="width:22px;height:22px;min-height:0"><span>It did not trip on the instrument test</span></label>
+    <div class="verdict" id="verdict">Record a push-button test, a trip time, or both.</div>
+    <div class="row2">${F.text('tester', 'Tested by', s.tester)}${F.select('instrument', 'Instrument', (s.instruments[0] || {}).name || '', [['', 'Not recorded'], ...s.instruments.map(x => [x.name + (x.serial ? ' s/n ' + x.serial : ''), x.name])])}</div>
+    ${F.area('notes', 'Notes', '')}
+    ${ERR}<div class="actions"><button class="btn primary">Save test</button></div></form>`;
+}
+
+/* ---------- certificates ---------- */
+function circuitCard(c, n) {
+  const p = `c_${n}_`;
+  return `<div class="circuit"><div class="ch"><b>Circuit ${n + 1}</b><button type="button" class="btn small danger" data-act="delCircuit" data-n="${n}">Remove</button></div>
+    <div class="row2">${F.text(p + 'ref', 'Circuit no.', c.ref)}${F.text(p + 'desc', 'Description', c.desc, { attrs: 'placeholder="Power, kitchen"' })}</div>
+    <div class="row2">${F.text(p + 'prot', 'Protection', c.prot, { attrs: 'placeholder="20 A RCBO"' })}${F.text(p + 'cable', 'Cable size', c.cable, { attrs: 'placeholder="2.5 mm²"' })}</div>
+    <div class="row2">${F.num(p + 'earth', 'Earth continuity', c.earth, 'Ω')}${F.num(p + 'ir', 'Insulation resistance', c.ir, 'MΩ', { quick: ['>200', '>999'] })}</div>
+    <div class="row3">${F.num(p + 'zs', 'Fault loop', c.zs, 'Ω')}${F.num(p + 'rcd', 'RCD trip', c.rcd, 'ms')}${F.select(p + 'pol', 'Polarity', c.pol, [['', 'Not tested'], ['Correct', 'Correct'], ['N/A', 'N/A']])}</div></div>`;
+}
+function certForm(c) {
+  const s = S.settings, exists = S.certs.some(x => x.id === c.id);
+  return `<form data-submit="cert" data-live="cert">
+    ${F.select('type', 'Certificate type', c.type, [['compliance', 'Testing and compliance (installation work)'], ['safety', 'Testing and safety (equipment work)'], ['report', 'Test report only']])}
+    <p class="hint" id="certHint">${CERT_HINT[c.type]}</p>
+    <div class="row2">${F.text('number', 'Certificate no.', c.number)}${F.text('dateTested', 'Date tested', c.dateTested, { type: 'date' })}</div>
+    <h3>Issued to</h3>
+    ${S.clients.length ? F.select('pick', 'Fill in from a client', '', [['', 'Choose a client'], ...[...S.clients].sort(byName).map(x => [x.id, x.name])], 'data-change="certPick"') : ''}
+    ${F.text('clientName', 'Name of the person the work was done for', c.clientName)}
+    ${F.text('clientAddress', 'Their address', c.clientAddress)}
+    <h3>What was tested</h3>
+    ${F.text('siteAddress', 'Address of the installation or equipment', c.siteAddress)}
+    ${F.area('workDesc', 'Details of the work and what was tested', c.workDesc)}
+    <h3>Tests carried out</h3>
+    ${CHECKS.map(k => F.seg('chk_' + k.k, k.n, c.checks[k.k] || '', [['pass', 'Pass', 'p'], ['na', 'N/A'], ['', 'Not done']])).join('')}
+    <h3>Circuit results</h3>
+    <div class="list">${c.circuits.map(circuitCard).join('') || '<p class="muted">No circuits added. Add one for each circuit you tested.</p>'}</div>
+    <button type="button" class="btn" data-act="addCircuit">+ Add a circuit</button>
+    <h3>Sign-off</h3>
+    ${F.select('instrument', 'Test instrument', c.instrument, [['', 'Not recorded'], ...s.instruments.map(x => { const t = x.name + (x.serial ? ' s/n ' + x.serial : ''); return [t, x.name]; }), ...(c.instrument && !s.instruments.some(x => (x.name + (x.serial ? ' s/n ' + x.serial : '')) === c.instrument) ? [[c.instrument, c.instrument]] : [])])}
+    ${F.area('statement', 'Certification statement', c.statement)}
+    <div class="row2">${F.text('signedBy', 'Tested and certified by', c.signedBy)}${F.text('testerLic', 'Electrical work licence no.', c.testerLic)}</div>
+    ${F.area('notes', 'Notes or defects found', c.notes)}
+    ${ERR}<div class="actions"><button class="btn primary" name="go" value="issue">Save and issue</button><button class="btn" name="go" value="save">Save draft</button><button class="btn" name="go" value="pdf">Save and download PDF</button></div>
+    ${exists ? `<button type="button" class="btn danger small" data-act="delCert" data-id="${c.id}">Delete this certificate</button>` : ''}</form>`;
+}
+function certSummary(c) {
+  return `<div class="row" style="border:0;padding:0">${tagChip('', c.number)}<span class="main"><b>${esc(CERT_TITLE[c.type])}${exPill(c)}</b><span>${esc(c.clientName)}</span></span><span class="side"><span class="pill pass">Issued</span></span></div>
+  <div class="actions"><button class="btn primary" data-act="certPdf" data-id="${c.id}">Download PDF</button><button class="btn" data-act="dupCert" data-id="${c.id}">Copy to a new certificate</button></div>
+  <dl class="dl"><div><dt>Date tested</dt><dd class="num">${fmt(c.dateTested)}</dd></div><div><dt>Date issued</dt><dd class="num">${fmt(c.dateIssued)}</dd></div>
+    <div><dt>Issued to</dt><dd>${esc(c.clientName)}<br>${esc(c.clientAddress)}</dd></div><div><dt>Tested at</dt><dd>${esc(c.siteAddress || '—')}</dd></div>
+    <div><dt>Circuits</dt><dd class="num">${c.circuits.length}</dd></div><div><dt>Certified by</dt><dd>${esc(c.signedBy || '—')}</dd></div></dl>
+  <p>${esc(c.workDesc)}</p>
+  <p class="hint">Issued certificates are locked so the record matches what the customer was given. Keep a copy for at least 5 years.</p>
+  <div class="actions"><button class="btn small" data-act="reopenCert" data-id="${c.id}">Reopen as a draft</button><button class="btn small danger" data-act="delCert" data-id="${c.id}">Delete</button></div>`;
+}
+function readCert(form) {
+  const fd = formData(form), c = W.cert;
+  ['type', 'number', 'dateTested', 'clientName', 'clientAddress', 'siteAddress', 'workDesc', 'instrument', 'statement', 'signedBy', 'testerLic', 'notes'].forEach(k => { c[k] = fd[k] ?? c[k]; });
+  CHECKS.forEach(k => { c.checks[k.k] = fd['chk_' + k.k] || ''; });
+  c.circuits = c.circuits.map((x, n) => { const o = { id: x.id }; ['ref', 'desc', 'prot', 'cable', 'earth', 'ir', 'zs', 'rcd', 'pol'].forEach(k => { o[k] = fd[`c_${n}_${k}`] || ''; }); return o; });
+  return c;
+}
+function newCert(from) {
+  const s = S.settings;
+  return Object.assign({ id: uid(), number: certNumber(), type: 'compliance', status: 'draft', clientName: '', clientAddress: '', siteAddress: '', workDesc: '', dateTested: today(), dateIssued: '', checks: {}, circuits: [], instrument: s.instruments[0] ? s.instruments[0].name + (s.instruments[0].serial ? ' s/n ' + s.instruments[0].serial : '') : '', statement: STATEMENT.compliance, signedBy: s.tester, testerLic: s.testerLic, notes: '' }, from || {});
+}
+
+/* ---------- clients and instruments ---------- */
+function clientForm(c) {
+  return `<form data-submit="client">
+    ${F.text('name', 'Client name', c.name)}
+    <div class="row2">${F.text('contact', 'Contact person', c.contact)}${F.text('phone', 'Phone', c.phone, { type: 'tel' })}</div>
+    ${F.text('email', 'Email', c.email, { type: 'email' })}${F.text('address', 'Postal or billing address', c.address)}
+    <h3>Sites</h3>
+    ${c.sites.map((s, n) => `<div class="circuit"><div class="ch"><b>Site ${n + 1}</b>${c.sites.length > 1 ? `<button type="button" class="btn small danger" data-act="delSite" data-n="${n}">Remove</button>` : ''}</div>${F.text(`s_${n}_name`, 'Site name', s.name)}${F.text(`s_${n}_address`, 'Site address', s.address)}</div>`).join('')}
+    <button type="button" class="btn" data-act="addSite">+ Add a site</button>
+    ${F.area('notes', 'Notes', c.notes)}
+    ${ERR}<div class="actions"><button class="btn primary">Save client</button></div>
+    ${S.clients.some(x => x.id === c.id) ? `<button type="button" class="btn danger small" data-act="delClient" data-id="${c.id}">Delete this client</button>` : ''}</form>`;
+}
+function readClient(form) {
+  const fd = formData(form), c = W.client;
+  ['name', 'contact', 'phone', 'email', 'address', 'notes'].forEach(k => { c[k] = fd[k] ?? ''; });
+  c.sites = c.sites.map((s, n) => ({ id: s.id, name: fd[`s_${n}_name`] || '', address: fd[`s_${n}_address`] || '' }));
+  return c;
+}
+const instForm = i => `<form data-submit="inst">${F.text('name', 'Make and model', i.name, { attrs: 'placeholder="Portable appliance tester"' })}<div class="row2">${F.text('serial', 'Serial no.', i.serial)}${F.text('cal', 'Calibration due', i.cal, { type: 'date' })}</div>${ERR}<div class="actions"><button class="btn primary">Save instrument</button>${S.settings.instruments.some(x => x.id === i.id) ? `<button type="button" class="btn danger" data-act="delInst" data-id="${i.id}">Delete</button>` : ''}</div></form>`;
+
+/* ---------- signature pad and logo ---------- */
+let padSaveT;
+function initPad() {
+  const cv = $('#pad'); if (!cv) return;
+  const ctx = cv.getContext('2d'), paint = () => { ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, cv.width, cv.height); };
+  paint();
+  if (S.settings.sign) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, cv.width, cv.height); im.src = S.settings.sign; }
+  let down = false;
+  const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
+  cv.addEventListener('pointerdown', e => { down = true; cv.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.moveTo(...pos(e)); e.preventDefault(); });
+  cv.addEventListener('pointermove', e => { if (!down) return; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#13202E'; ctx.lineTo(...pos(e)); ctx.stroke(); });
+  const up = () => { if (!down) return; down = false; clearTimeout(padSaveT); padSaveT = setTimeout(() => { S.settings.sign = cv.toDataURL('image/png'); saveSettings(); }, 700); };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+}
+function loadLogo(file) {
+  if (!file) return;
+  const fr = new FileReader();
+  fr.onload = () => { const im = new Image(); im.onload = () => {
+    const k = Math.min(1, 360 / im.width, 160 / im.height), cv = document.createElement('canvas');
+    cv.width = Math.max(1, Math.round(im.width * k)); cv.height = Math.max(1, Math.round(im.height * k));
+    const ctx = cv.getContext('2d'); ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.drawImage(im, 0, 0, cv.width, cv.height);
+    S.settings.logo = cv.toDataURL('image/jpeg', 0.9); saveSettings(); render(); toast('Logo saved');
+  }; im.onerror = () => toast('That image could not be read.'); im.src = fr.result; };
+  fr.readAsDataURL(file);
+}
+
+/* ---------- PDF and CSV ---------- */
+const PT = s => String(s ?? '').replace(/Ω/g, 'ohm').replace(/≤/g, '<=').replace(/≥/g, '>=').replace(/[—–]/g, '-').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\r/g, '').replace(/\t/g, ' ').replace(/[^\x20-\x7E\xA0-\xFF\n]/g, '');
+class Pdf {
+  static async make(landscape) {
+    const L = window.PDFLib, p = new Pdf();
+    p.L = L; p.d = await L.PDFDocument.create();
+    p.f = await p.d.embedFont(L.StandardFonts.Helvetica); p.b = await p.d.embedFont(L.StandardFonts.HelveticaBold);
+    p.size = landscape ? [841.89, 595.28] : [595.28, 841.89]; p.m = 40;
+    p.ink = L.rgb(.075, .125, .18); p.grey = L.rgb(.31, .38, .45); p.line = L.rgb(.79, .82, .86); p.zebra = L.rgb(.955, .965, .975); p.red = L.rgb(.72, .15, .11);
+    p.add(); return p;
+  }
+  add() { this.pg = this.d.addPage(this.size); this.y = this.size[1] - this.m; }
+  get w() { return this.size[0] - 2 * this.m; }
+  need(h) { if (this.y - h < this.m + 24) { this.add(); return true; } return false; }
+  lines(text, font, size, width) {
+    const out = [];
+    for (const para of PT(text).split('\n')) {
+      let line = '';
+      for (let word of para.split(' ')) {
+        while (word.length > 1 && font.widthOfTextAtSize(word, size) > width) {
+          let n = word.length; while (n > 1 && font.widthOfTextAtSize(word.slice(0, n), size) > width) n--;
+          if (line) { out.push(line); line = ''; }
+          out.push(word.slice(0, n)); word = word.slice(n);
+        }
+        const t = line ? line + ' ' + word : word;
+        if (font.widthOfTextAtSize(t, size) <= width) line = t; else { out.push(line); line = word; }
+      }
+      out.push(line);
+    }
+    return out;
+  }
+  text(str, o = {}) {
+    const size = o.size || 10, font = o.bold ? this.b : this.f, x = o.x ?? this.m, width = o.width ?? (this.w - (x - this.m)), lh = size * 1.38;
+    for (const l of this.lines(str, font, size, width)) { this.need(lh); this.pg.drawText(l, { x, y: this.y - size, size, font, color: o.color || this.ink }); this.y -= lh; }
+    this.y -= o.gap || 0;
+  }
+  rule(gap = 8) { this.pg.drawLine({ start: { x: this.m, y: this.y }, end: { x: this.m + this.w, y: this.y }, thickness: .6, color: this.line }); this.y -= gap; }
+  heading(t) { this.need(54); this.y -= 8; this.text(t.toUpperCase(), { size: 8.5, bold: true, color: this.grey, gap: 1 }); this.rule(7); }
+  kv(pairs, cols = 2) {
+    const cw = this.w / cols;
+    for (let i = 0; i < pairs.length; i += cols) {
+      const row = pairs.slice(i, i + cols), blocks = row.map(([, v]) => this.lines(v || '-', this.f, 10, cw - 12));
+      const h = Math.max(...blocks.map(b => b.length)) * 13.5 + 18;
+      this.need(h);
+      row.forEach(([k], j) => { const x = this.m + j * cw; this.pg.drawText(PT(k), { x, y: this.y - 8, size: 7.5, font: this.f, color: this.grey }); blocks[j].forEach((l, n) => this.pg.drawText(l, { x, y: this.y - 21 - n * 13.5, size: 10, font: this.f, color: this.ink })); });
+      this.y -= h;
+    }
+  }
+  table(cols, rows, o = {}) {
+    const size = o.size || 8, pad = 4, lh = size * 1.3, tot = cols.reduce((a, c) => a + c.w, 0), ws = cols.map(c => c.w / tot * this.w);
+    const draw = (cells, font, colour, fill, ri) => {
+      const cl = cells.map((c, i) => this.lines(c, font, size, ws[i] - 2 * pad)), h = Math.max(...cl.map(l => l.length)) * lh + 2 * pad;
+      if (fill) this.pg.drawRectangle({ x: this.m, y: this.y - h, width: this.w, height: h, color: fill });
+      let x = this.m;
+      cl.forEach((ls, i) => { const col = (o.colour && ri != null && o.colour(ri, i)) || colour; ls.forEach((l, n) => this.pg.drawText(l, { x: x + pad, y: this.y - pad - size + 1 - n * lh, size, font, color: col })); x += ws[i]; });
+      this.y -= h;
+      this.pg.drawLine({ start: { x: this.m, y: this.y }, end: { x: this.m + this.w, y: this.y }, thickness: .4, color: this.line });
+    };
+    const head = () => draw(cols.map(c => c.h), this.b, this.L.rgb(1, 1, 1), this.ink);
+    this.need(60); head();
+    rows.forEach((r, ri) => {
+      const h = Math.max(...r.map((c, i) => this.lines(c, this.f, size, ws[i] - 2 * pad).length)) * lh + 2 * pad;
+      if (this.need(h)) head();
+      draw(r, this.f, this.ink, ri % 2 ? this.zebra : null, ri);
+    });
+    this.y -= 10;
+  }
+  async image(src, x, top, maxW, maxH) {
+    try {
+      const img = src.startsWith('data:image/png') ? await this.d.embedPng(src) : await this.d.embedJpg(src);
+      const k = Math.min(maxW / img.width, maxH / img.height), w = img.width * k, h = img.height * k;
+      this.pg.drawImage(img, { x, y: top - h, width: w, height: h }); return { w, h };
+    } catch (e) { return null; }
+  }
+  async done(footer, draft) {
+    const pages = this.d.getPages();
+    pages.forEach((pg, i) => {
+      if (draft) pg.drawText('DRAFT', { x: this.size[0] / 2 - 150, y: this.size[1] / 2 - 120, size: 110, font: this.b, color: this.grey, opacity: .1, rotate: this.L.degrees(38) });
+      pg.drawText(PT(footer), { x: this.m, y: 22, size: 7.5, font: this.f, color: this.grey });
+      const t = `Page ${i + 1} of ${pages.length}`;
+      pg.drawText(t, { x: this.size[0] - this.m - this.f.widthOfTextAtSize(t, 7.5), y: 22, size: 7.5, font: this.f, color: this.grey });
+    });
+    return this.d.save();
+  }
+}
+async function letterhead(p, title, sub) {
+  const s = S.settings, top = p.y; let x = p.m;
+  if (s.logo) { const r = await p.image(s.logo, p.m, top, 120, 48); if (r) x += r.w + 12; }
+  p.pg.drawText(PT(s.biz || 'Business name not set'), { x, y: top - 14, size: 14, font: p.b, color: p.ink });
+  [s.addr, [s.phone, s.email].filter(Boolean).join('   '), s.abn ? 'ABN ' + s.abn : ''].filter(Boolean).forEach((l, i) => p.pg.drawText(PT(l), { x, y: top - 28 - i * 11, size: 8.5, font: p.f, color: p.grey }));
+  if (s.contractorLic) {
+    const a = 'Electrical contractor licence', b = PT(s.contractorLic), r = p.m + p.w;
+    p.pg.drawText(a, { x: r - p.f.widthOfTextAtSize(a, 7.5), y: top - 8, size: 7.5, font: p.f, color: p.grey });
+    p.pg.drawText(b, { x: r - p.b.widthOfTextAtSize(b, 12), y: top - 23, size: 12, font: p.b, color: p.ink });
+  }
+  p.y = top - 60;
+  p.pg.drawRectangle({ x: p.m, y: p.y, width: p.w, height: 3.5, color: p.L.rgb(.118, .549, .306) });
+  for (let sx = p.m + 22; sx < p.m + p.w - 9; sx += 32) p.pg.drawRectangle({ x: sx, y: p.y, width: 9, height: 3.5, color: p.L.rgb(.953, .784, .11) });
+  p.y -= 16;
+  p.text(title, { size: 18, bold: true });
+  if (sub) p.text(sub, { size: 9, color: p.grey });
+  p.y -= 6;
+}
+async function buildCertPdf(c) {
+  const p = await Pdf.make(false), s = S.settings, statutory = c.type !== 'report';
+  await letterhead(p, CERT_TITLE[c.type], statutory ? 'Electrical Safety Regulation 2013 (Qld)' : 'Record of electrical test results');
+  p.kv([['Certificate no.', c.number], ['Date tested', fmt(c.dateTested)], ['Date issued', c.status === 'issued' ? fmt(c.dateIssued) : 'Draft, not issued']], 3);
+  p.heading('Issued to'); p.kv([['Name', c.clientName], ['Address', c.clientAddress]], 2);
+  p.heading(c.type === 'safety' ? 'Electrical equipment tested' : 'Electrical installation tested');
+  p.kv([['Address', c.siteAddress || c.clientAddress]], 1); p.kv([['Details of the work and what was tested', c.workDesc]], 1);
+  const checks = CHECKS.filter(k => c.checks[k.k]);
+  if (checks.length) { p.heading('Tests carried out'); p.table([{ h: 'Test', w: 78 }, { h: 'Result', w: 22 }], checks.map(k => [k.n, c.checks[k.k] === 'pass' ? 'Pass' : 'Not applicable'])); }
+  if (c.circuits.length) {
+    p.heading('Circuit results');
+    p.table([{ h: 'No.', w: 7 }, { h: 'Circuit', w: 22 }, { h: 'Protection', w: 14 }, { h: 'Cable', w: 11 }, { h: 'Earth cont. (ohm)', w: 10 }, { h: 'Insulation (Mohm)', w: 11 }, { h: 'Fault loop (ohm)', w: 10 }, { h: 'RCD (ms)', w: 7 }, { h: 'Polarity', w: 9 }],
+      c.circuits.map(x => [x.ref, x.desc, x.prot, x.cable, x.earth, x.ir, x.zs, x.rcd, x.pol].map(v => v || '-')));
+  }
+  if (c.instrument) { const inst = s.instruments.find(x => (x.name + (x.serial ? ' s/n ' + x.serial : '')) === c.instrument); p.text('Test instrument: ' + c.instrument + (inst && validD(inst.cal) ? ', calibration due ' + fmt(inst.cal) : ''), { size: 9, color: p.grey, gap: 4 }); }
+  if (c.notes) { p.heading('Notes and defects'); p.text(c.notes, { gap: 4 }); }
+  p.need(64 + p.lines(c.statement, p.f, 10, p.w).length * 13.8 + 120);
+  p.heading(statutory ? 'Certification' : 'Statement'); p.text(c.statement, { gap: 10 });
+  const top = p.y;
+  if (s.sign && c.status === 'issued') await p.image(s.sign, p.m, top, 170, 56);
+  p.y = top - 60; p.pg.drawLine({ start: { x: p.m, y: p.y }, end: { x: p.m + 200, y: p.y }, thickness: .6, color: p.ink }); p.y -= 4;
+  p.kv([['Signed', c.signedBy], ['Electrical work licence no.', c.testerLic], ['Electrical contractor licence no.', s.contractorLic]], 3);
+  return p.done(`${c.number}   ${s.biz || ''}${statutory ? '   The electrical contractor keeps a copy of this certificate for at least 5 years.' : ''}`, c.status !== 'issued');
+}
+async function buildSitePdf() {
+  const p = await Pdf.make(true), rows = S.items.filter(inSite).sort((a, b) => whereOf(a).localeCompare(whereOf(b)) || String(a.assetId).localeCompare(String(b.assetId), undefined, { numeric: true }));
+  const one = !!S.filter.site, first = rows[0] || S.rcds.filter(inSite)[0];
+  await letterhead(p, 'Test and Tag Register', 'In-service safety inspection and testing of electrical equipment, AS/NZS 3760');
+  const pass = rows.filter(i => i.status === 'pass').length, fail = rows.filter(i => i.status === 'fail').length;
+  p.kv([['Client and site', one && first ? whereOf(first) : 'All clients and sites'], ['Report date', fmt(today())], ['Appliances', `${rows.length} listed, ${pass} passed, ${fail} failed`], ['Tester', S.settings.tester]], 4);
+  const last = i => (i.tests || [])[0] || {};
+  p.table([{ h: 'Asset ID', w: 9 }, ...(one ? [] : [{ h: 'Site', w: 15 }]), { h: 'Appliance', w: 19 }, { h: 'Location', w: 13 }, { h: 'Type', w: 9 }, { h: 'Tested', w: 10 }, { h: 'Earth (ohm)', w: 7 }, { h: 'Insul. (Mohm)', w: 7 }, { h: 'Leak (mA)', w: 6 }, { h: 'Result', w: 7 }, { h: 'Tag', w: 7 }, { h: 'Retest due', w: 10 }, { h: 'Tested by', w: 11 }],
+    rows.map(i => { const t = last(i); return [i.assetId, ...(one ? [] : [whereOf(i)]), i.desc, i.location, CLS_SHORT[i.cls], fmt(i.lastTest), t.earth, t.ir, t.leak, i.status === 'pass' ? 'PASS' : i.status === 'fail' ? 'FAIL' : 'Not tested', t.tag, i.status === 'pass' ? fmt(i.nextDue) : '-', t.tester].map(v => (v === '' || v == null || v === '—' ? '-' : String(v))); }),
+    { size: 7.5, colour: (ri, ci) => (rows[ri].status === 'fail' && ci === (one ? 8 : 9) ? p.red : null) });
+  const rcds = S.rcds.filter(inSite);
+  if (rcds.length) {
+    p.heading('RCD tests');
+    p.table([{ h: 'RCD', w: 12 }, ...(one ? [] : [{ h: 'Site', w: 16 }]), { h: 'Switchboard', w: 16 }, { h: 'Rating', w: 8 }, { h: 'Tested', w: 11 }, { h: 'Push-button', w: 10 }, { h: 'Trip 0 deg (ms)', w: 9 }, { h: 'Trip 180 deg (ms)', w: 9 }, { h: 'Result', w: 8 }, { h: 'Next due', w: 11 }],
+      rcds.map(r => { const t = (r.tests || [])[0] || {}; return [r.ref, ...(one ? [] : [whereOf(r)]), r.board, r.rating + ' mA', t.date ? fmt(t.date) : '', t.push === 'pass' ? 'Pass' : t.push === 'fail' ? 'Fail' : '', t.noTrip ? 'No trip' : t.t0, t.noTrip ? 'No trip' : t.t180, r.status === 'pass' ? 'PASS' : r.status === 'fail' ? 'FAIL' : 'Not tested', fmt(rcdDue(r))].map(v => (v === '' || v == null || v === '—' ? '-' : String(v))); }), { size: 7.5 });
+  }
+  return p.done(`${S.settings.biz || ''}   Test and tag register   ${fmt(today())}`, false);
+}
+const csv = rows => '﻿' + rows.map(r => r.map(v => { const t = String(v ?? ''); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; }).join(',')).join('\r\n');
+function itemsCsv() {
+  const rows = [['Client and site', 'Asset ID', 'Appliance', 'Make and model', 'Serial no.', 'Location', 'Type', 'Used in', 'Test date', 'Visual', 'Earth continuity (ohm)', 'Insulation resistance (Mohm)', 'Leakage (mA)', 'Polarity', 'Result', 'Tag colour', 'Retest due', 'Tested by', 'Instrument', 'Action', 'Notes']];
+  S.items.filter(inSite).forEach(i => { const base = [whereOf(i), i.assetId, i.desc, i.make, i.serial, i.location, CLS[i.cls], envOf(i.env).n]; const ts = i.tests && i.tests.length ? i.tests : [{}]; ts.forEach(t => rows.push([...base, t.date, t.visual, t.earth, t.ir, t.leak, t.polarity, t.result, t.tag, t.nextDue, t.tester, t.instrument, t.action, t.notes])); });
+  return csv(rows);
+}
+function rcdsCsv() {
+  const rows = [['Client and site', 'RCD', 'Switchboard or location', 'Circuits', 'Rating (mA)', 'Fixed or portable', 'Test date', 'Push-button', 'Trip time 0 deg (ms)', 'Trip time 180 deg (ms)', 'Did not trip', 'Result', 'Tested by', 'Instrument', 'Notes']];
+  S.rcds.filter(inSite).forEach(r => { const base = [whereOf(r), r.ref, r.board, r.circuit, r.rating, r.kind]; const ts = r.tests && r.tests.length ? r.tests : [{}]; ts.forEach(t => rows.push([...base, t.date, t.push, t.t0, t.t180, t.noTrip ? 'yes' : '', t.result, t.tester, t.instrument, t.notes])); });
+  return csv(rows);
+}
+const fileSafe = s => String(s || '').replace(/[^A-Za-z0-9 _.-]/g, '').trim().slice(0, 80) || 'tagbook';
+async function saveFile(filename, data) {
+  if (!Cap.downloads) {
+    if (window.claude) { toast('File downloads are not available in this view.'); return; }
+    const type = /\.pdf$/.test(filename) ? 'application/pdf' : /\.csv$/.test(filename) ? 'text/csv' : 'application/json';
+    const url = URL.createObjectURL(new Blob([data], { type })), a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000); toast('Downloaded ' + filename); return;
+  }
+  try { await Cap.downloads.save({ filename, data }); toast('Saved ' + filename); }
+  catch (e) { if (e && e.code === 'declined') return; toast(e && e.code === 'rate_limited' ? 'A download is already waiting for your answer.' : 'The file could not be saved.'); }
+}
+async function certPdf(c) {
+  if (!window.PDFLib) { toast('The PDF tool did not load. Check your connection and reopen the app.'); return; }
+  try { await saveFile(`${fileSafe(c.number)} ${fileSafe(CERT_SHORT[c.type])}.pdf`, await buildCertPdf(c)); } catch (e) { toast('The PDF could not be built.'); }
+}
+
+/* ---------- actions ---------- */
+const openItem = id => { const i = S.items.find(x => x.id === id); if (i) openSheet('Appliance', itemDetail(i)); };
+const openRcd = id => { const r = S.rcds.find(x => x.id === id); if (r) openSheet('RCD', rcdDetail(r)); };
+function startItem(seed) {
+  const e = envOf((seed && seed.env) || S.settings.lastEnv);
+  W = { item: Object.assign({ id: uid(), clientId: '', siteId: '', assetId: nextAssetId(), desc: '', make: '', serial: '', location: '', cls: 'I', env: e.k, interval: e.m, status: 'untested', lastTest: '', nextDue: '', tagColour: '', tests: [] }, seed || {}) };
+  openSheet('New appliance', itemForm(W.item));
+}
+function startRcd() {
+  const e = envOf(S.settings.lastEnv);
+  W = { rcd: { id: uid(), clientId: '', siteId: '', ref: '', board: '', circuit: '', rating: '30', kind: 'fixed', env: e.k, pushMonths: e.pf, timeMonths: e.tf, status: 'untested', nextPush: '', nextTime: '', tests: [] } };
+  openSheet('New RCD', rcdForm(W.rcd));
+}
+function openCert(c, isNew) {
+  W = { cert: clone(c), provisional: isNew ? c.number : '' };
+  openSheet(isNew ? 'New certificate' : 'Certificate ' + c.number, certForm(W.cert));
+}
+const act = {
+  tab(d) { S.tab = d.tab; S.sub = ''; render(); window.scrollTo(0, 0); },
+  sub(d) { S.tab = 'more'; S.sub = d.sub; render(); window.scrollTo(0, 0); },
+  goDue() { S.tab = 'tag'; S.filter.status = 'due'; render(); window.scrollTo(0, 0); },
+  goFailed() { S.tab = 'tag'; S.filter.status = 'fail'; render(); window.scrollTo(0, 0); },
+  closeSheet,
+  confirmNo() { $('#confirm').close(); confirmFn = null; },
+  confirmYes() { $('#confirm').close(); const fn = confirmFn; confirmFn = null; if (fn) fn(); },
+  quickVal(d) { const el = document.getElementById(d.for); if (el) { el.value = d.v; el.dispatchEvent(new Event('input', { bubbles: true })); } },
+  fltStatus(d) { S.filter.status = d.v; render(); },
+  fltClear() { S.filter = { site: '', status: 'all', q: '' }; render(); },
+  clearExamples() {
+    confirmBox('Remove all the example records? Your own records are not touched.', 'Remove examples', () => {
+      ['items', 'rcds', 'certs', 'clients'].forEach(n => S[n].filter(x => x.example).forEach(x => remove(n, x.id)));
+      render(); toast('Examples removed');
+    });
+  },
+  newItem() { startItem(); },
+  openItem(d) { openItem(d.id); },
+  editItem(d) { const i = S.items.find(x => x.id === d.id); W = { item: clone(i) }; openSheet('Edit appliance', itemForm(W.item)); },
+  testItem(d) { const i = S.items.find(x => x.id === d.id); W = { item: i }; openSheet('Record a test', testForm(i)); },
+  delItem(d) { confirmBox('Delete this appliance and its whole test history? This cannot be undone.', 'Delete', () => { remove('items', d.id); closeSheet(); render(); toast('Appliance deleted'); }); },
+  newRcd() { startRcd(); },
+  openRcd(d) { openRcd(d.id); },
+  editRcd(d) { W = { rcd: clone(S.rcds.find(x => x.id === d.id)) }; openSheet('Edit RCD', rcdForm(W.rcd)); },
+  testRcd(d) { const r = S.rcds.find(x => x.id === d.id); W = { rcd: r }; openSheet('Record an RCD test', rcdTestForm(r)); },
+  delRcd(d) { confirmBox('Delete this RCD and its whole test history? This cannot be undone.', 'Delete', () => { remove('rcds', d.id); closeSheet(); render(); toast('RCD deleted'); }); },
+  newCert() { openCert(newCert(), true); },
+  openCert(d) { const c = S.certs.find(x => x.id === d.id); if (!c) return; if (c.status === 'issued') openSheet('Certificate ' + c.number, certSummary(c)); else openCert(c, false); },
+  addCircuit(d, el) { const c = readCert(el.closest('form')); c.circuits.push({ id: uid(), ref: String(c.circuits.length + 1), desc: '', prot: '', cable: '', earth: '', ir: '', zs: '', rcd: '', pol: '' }); const st = $('#sheetBody').scrollTop; $('#sheetBody').innerHTML = certForm(c); $('#sheetBody').scrollTop = st; },
+  delCircuit(d, el) { const c = readCert(el.closest('form')); c.circuits.splice(Number(d.n), 1); const st = $('#sheetBody').scrollTop; $('#sheetBody').innerHTML = certForm(c); $('#sheetBody').scrollTop = st; },
+  certPdf(d) { const c = S.certs.find(x => x.id === d.id); if (c) certPdf(c); },
+  dupCert(d) { const c = S.certs.find(x => x.id === d.id); const n = newCert(Object.assign(clone(c), { id: uid(), number: certNumber(), status: 'draft', dateIssued: '', dateTested: today(), example: undefined })); n.circuits.forEach(x => { x.id = uid(); }); openCert(n, true); },
+  reopenCert(d) { confirmBox('Reopen this certificate as a draft? If you change it, give the customer the new copy.', 'Reopen', () => { const c = S.certs.find(x => x.id === d.id); c.status = 'draft'; c.dateIssued = ''; save('certs', c); render(); openCert(c, false); }); },
+  delCert(d) { confirmBox('Delete this certificate? Certificates should be kept for at least 5 years. This cannot be undone.', 'Delete', () => { remove('certs', d.id); closeSheet(); render(); toast('Certificate deleted'); }); },
+  newClient() { W = { client: { id: uid(), name: '', contact: '', phone: '', email: '', address: '', notes: '', sites: [{ id: uid(), name: 'Main site', address: '' }] } }; openSheet('New client', clientForm(W.client)); },
+  openClient(d) { W = { client: clone(clientOf(d.id)) }; openSheet('Client', clientForm(W.client)); },
+  addSite(d, el) { const c = readClient(el.closest('form')); c.sites.push({ id: uid(), name: '', address: '' }); $('#sheetBody').innerHTML = clientForm(c); },
+  delSite(d, el) {
+    const c = readClient(el.closest('form')), s = c.sites[Number(d.n)];
+    const used = S.items.some(i => i.siteId === s.id) || S.rcds.some(r => r.siteId === s.id);
+    if (used) { formErr(el.closest('form'), 'This site still has appliances or RCDs. Delete or move those first.'); return; }
+    c.sites.splice(Number(d.n), 1); $('#sheetBody').innerHTML = clientForm(c);
+  },
+  delClient(d) {
+    const n = S.items.filter(i => i.clientId === d.id).length + S.rcds.filter(r => r.clientId === d.id).length;
+    if (n) { toast(`This client still has ${n} appliance or RCD record${n === 1 ? '' : 's'}. Delete those first.`); return; }
+    confirmBox('Delete this client?', 'Delete', () => { remove('clients', d.id); closeSheet(); render(); });
+  },
+  newInst() { W = { inst: { id: uid(), name: '', serial: '', cal: '' } }; openSheet('New instrument', instForm(W.inst)); },
+  openInst(d) { W = { inst: clone(S.settings.instruments.find(x => x.id === d.id)) }; openSheet('Instrument', instForm(W.inst)); },
+  delInst(d) { S.settings.instruments = S.settings.instruments.filter(x => x.id !== d.id); saveSettings(); closeSheet(); render(); },
+  clearLogo() { S.settings.logo = ''; saveSettings(); render(); },
+  clearSign() { S.settings.sign = ''; saveSettings(); render(); },
+  async sitePdf() {
+    if (!window.PDFLib) { toast('The PDF tool did not load. Check your connection and reopen the app.'); return; }
+    try { const f = S.items.filter(inSite)[0]; await saveFile(`Test and tag register ${S.filter.site && f ? fileSafe(whereOf(f).replace(' · ', ' ')) : 'all sites'} ${today()}.pdf`, await buildSitePdf()); } catch (e) { toast('The PDF could not be built.'); }
+  },
+  csvItems() { saveFile(`Test and tag logbook ${today()}.csv`, itemsCsv()); },
+  csvRcds() { saveFile(`RCD log ${today()}.csv`, rcdsCsv()); },
+  backup() { saveFile(`Tagbook backup ${today()}.json`, JSON.stringify({ exported: new Date().toISOString(), settings: S.settings, clients: S.clients, items: S.items, rcds: S.rcds, certs: S.certs }, null, 1)); },
+};
+
+/* ---------- form submits ---------- */
+const submit = {
+  item(fd, form, go) {
+    const i = W.item, site = resolveSite(fd);
+    if (!site) return formErr(form, 'Choose a client and site, or type the new names.');
+    if (!fd.desc) return formErr(form, 'Say what the appliance is.');
+    if (!fd.assetId) return formErr(form, 'Give it an asset ID. This is the number written on the tag.');
+    if (S.items.some(x => x.id !== i.id && x.assetId.toLowerCase() === fd.assetId.toLowerCase())) return formErr(form, `Asset ID ${fd.assetId} is already used. Each appliance needs its own.`);
+    const iv = val(fd.interval); if (!iv) return formErr(form, 'Enter how many months between retests.');
+    Object.assign(i, site, { assetId: fd.assetId, desc: fd.desc, make: fd.make, serial: fd.serial, location: fd.location, cls: fd.cls, env: fd.env, interval: iv });
+    if (i.status === 'pass' && validD(i.lastTest)) i.nextDue = addMonths(i.lastTest, iv);
+    save('items', i); S.settings.lastEnv = i.env; saveSettings();
+    render();
+    if (go === 'test') { W = { item: i }; openSheet('Record a test', testForm(i)); } else { closeSheet(); toast('Appliance saved'); }
+  },
+  itemTest(fd, form, go) {
+    const i = W.item, ev = evalItem(i.cls, fd, S.settings.lim);
+    if (!validD(fd.date)) return formErr(form, 'Enter the date tested.');
+    const result = ev.fail.length ? 'fail' : fd.result;
+    if (!result) return formErr(form, 'Choose Pass or Fail.');
+    if (result === 'pass' && ev.miss.length) return formErr(form, 'To pass it still needs: ' + ev.miss.join(', ') + '.');
+    if (result === 'pass' && !validD(fd.nextDue)) return formErr(form, 'Enter the retest due date.');
+    const t = { id: uid(), date: fd.date, visual: fd.visual || '', earth: fd.earth || '', ir: fd.ir || '', leak: fd.leak || '', polarity: fd.polarity || '', result, tag: result === 'pass' ? (fd.tag || '') : '', nextDue: result === 'pass' ? fd.nextDue : '', tester: fd.tester, instrument: fd.instrument, action: result === 'fail' ? fd.action : '', notes: fd.notes };
+    i.tests = [t, ...(i.tests || [])].sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    const latest = i.tests[0];
+    Object.assign(i, { status: latest.result, lastTest: latest.date, nextDue: latest.nextDue, tagColour: latest.result === 'pass' ? latest.tag : '' });
+    save('items', i); S.settings.lastTag = fd.tag || S.settings.lastTag; if (fd.tester && !S.settings.tester) S.settings.tester = fd.tester; saveSettings();
+    render();
+    if (go === 'next') { startItem({ clientId: i.clientId, siteId: i.siteId, location: i.location, env: i.env, interval: i.interval, cls: i.cls }); toast(`${i.assetId} saved as ${result === 'pass' ? 'a pass' : 'a fail'}`); }
+    else { closeSheet(); toast(result === 'pass' ? `Passed. Retest due ${fmt(t.nextDue)}` : 'Saved as failed'); }
+  },
+  rcd(fd, form, go) {
+    const r = W.rcd, site = resolveSite(fd);
+    if (!site) return formErr(form, 'Choose a client and site, or type the new names.');
+    if (!fd.ref) return formErr(form, 'Give the RCD a name or number.');
+    const tm = val(fd.timeMonths); if (!tm) return formErr(form, 'Enter how many months between trip-time tests.');
+    Object.assign(r, site, { ref: fd.ref, board: fd.board, circuit: fd.circuit, rating: fd.rating, kind: fd.kind, env: fd.env, pushMonths: val(fd.pushMonths) || 0, timeMonths: tm });
+    if (validD(r.lastPush)) r.nextPush = r.pushMonths ? addMonths(r.lastPush, r.pushMonths) : '';
+    if (validD(r.lastTime)) r.nextTime = addMonths(r.lastTime, r.timeMonths);
+    save('rcds', r); render();
+    if (go === 'test') { W = { rcd: r }; openSheet('Record an RCD test', rcdTestForm(r)); } else { closeSheet(); toast('RCD saved'); }
+  },
+  rcdTest(fd, form) {
+    const r = W.rcd, ev = evalRcd(r, fd);
+    if (!validD(fd.date)) return formErr(form, 'Enter the date tested.');
+    if (!ev.done) return formErr(form, 'Record a push-button test, a trip time, or both.');
+    const t = { id: uid(), date: fd.date, push: fd.push || '', t0: fd.t0 || '', t180: fd.t180 || '', noTrip: !!fd.noTrip, result: ev.fail.length ? 'fail' : 'pass', tester: fd.tester, instrument: fd.instrument, notes: fd.notes };
+    r.tests = [t, ...(r.tests || [])].sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    const lp = r.tests.find(x => x.push), lt = r.tests.find(x => x.t0 || x.t180 || x.noTrip);
+    r.status = r.tests[0].result; r.lastPush = lp ? lp.date : ''; r.lastTime = lt ? lt.date : '';
+    r.nextPush = lp && Number(r.pushMonths) ? addMonths(lp.date, r.pushMonths) : '';
+    r.nextTime = lt ? addMonths(lt.date, r.timeMonths) : '';
+    save('rcds', r); if (fd.tester && !S.settings.tester) { S.settings.tester = fd.tester; saveSettings(); }
+    render(); closeSheet(); toast(t.result === 'pass' ? 'RCD passed' : 'RCD saved as failed');
+  },
+  cert(fd, form, go) {
+    const c = readCert(form), s = S.settings;
+    if (!c.number) return formErr(form, 'Give the certificate a number.');
+    if (S.certs.some(x => x.id !== c.id && x.number === c.number)) return formErr(form, `Certificate number ${c.number} is already used.`);
+    if (go === 'issue') {
+      const need = [];
+      if (!c.clientName) need.push('the name of the person the work was done for');
+      if (!c.clientAddress) need.push('their address');
+      if (!c.workDesc) need.push('details of what was tested');
+      if (!validD(c.dateTested)) need.push('the date tested');
+      if (!c.signedBy) need.push('who tested and certified it');
+      if (need.length) return formErr(form, 'Before issuing, add ' + need.join(', ') + '.');
+      if (c.type !== 'report' && !s.contractorLic) return formErr(form, 'This certificate must show an electrical contractor licence number. Add it under More, Business details, or issue it as a test report only.');
+      c.status = 'issued'; c.dateIssued = today();
+    }
+    if (W.provisional && c.number === W.provisional && !S.certs.some(x => x.id === c.id)) { s.certNext = (Number(s.certNext) || 1) + 1; saveSettings(); }
+    W.provisional = '';
+    save('certs', clone(c)); render();
+    if (go === 'pdf') { certPdf(c); $('#sheetTitle').textContent = 'Certificate ' + c.number; $('#sheetBody').innerHTML = certForm(c); toast('Draft saved'); return; }
+    if (go === 'issue') { W = {}; openSheet('Certificate ' + c.number, certSummary(c)); toast('Certificate issued'); return; }
+    closeSheet(); toast('Draft saved');
+  },
+  client(fd, form) {
+    const c = readClient(form);
+    if (!c.name) return formErr(form, 'Enter the client name.');
+    if (c.sites.some(s => !s.name)) return formErr(form, 'Give every site a name.');
+    save('clients', clone(c)); closeSheet(); render(); toast('Client saved');
+  },
+  inst(fd, form) {
+    if (!fd.name) return formErr(form, 'Enter the make and model.');
+    const i = Object.assign(W.inst, { name: fd.name, serial: fd.serial, cal: fd.cal }), a = S.settings.instruments, n = a.findIndex(x => x.id === i.id);
+    if (n < 0) a.push(i); else a[n] = i;
+    saveSettings(); closeSheet(); render(); toast('Instrument saved');
+  },
+  business(fd) { ['biz', 'abn', 'addr', 'phone', 'email', 'contractorLic', 'tester', 'testerLic'].forEach(k => { S.settings[k] = fd[k] || ''; }); saveSettings(); toast('Business details saved'); },
+  limits(fd, form) {
+    const L = {}; for (const k of ['earth', 'ir', 'leak1', 'leak2', 'rcd30', 'rcd10']) { const v = val(fd[k]); if (v === null) return formErr(form, 'Every limit needs a number.'); L[k] = v; }
+    Object.assign(S.settings, { lim: L, assetPrefix: fd.assetPrefix || '', certPrefix: fd.certPrefix || '', certNext: Math.max(1, Math.round(val(fd.certNext) || 1)) });
+    formErr(form, ''); saveSettings(); toast('Saved');
+  },
+};
+
+/* ---------- live form feedback ---------- */
+const live = {
+  itemTest(form, e) {
+    const fd = formData(form), i = W.item, ev = evalItem(i.cls, fd, S.settings.lim), v = $('#verdict', form);
+    const pass = $('#f-result-pass', form), fail = $('#f-result-fail', form);
+    if (e && e.target.name === 'result') form.dataset.touched = '1';
+    if (e && e.target.name === 'nextDue') form.dataset.dueTouched = '1';
+    if (e && e.target.name === 'date' && validD(fd.date)) {
+      if (!form.dataset.dueTouched) $('#f-nextDue', form).value = addMonths(fd.date, i.interval);
+      if (i.env === 'construction') { const r = $('#f-tag-' + seasonTag(fd.date), form); if (r) r.checked = true; }
+    }
+    pass.disabled = ev.fail.length > 0;
+    if (ev.fail.length) { fail.checked = true; v.className = 'verdict fail'; v.textContent = 'Fail: ' + ev.fail.join('; ') + '.'; }
+    else if (ev.miss.length) { v.className = 'verdict'; v.textContent = 'Still needed: ' + ev.miss.join(', ') + '.'; if (!form.dataset.touched) { pass.checked = false; fail.checked = false; } }
+    else { v.className = 'verdict pass'; v.textContent = 'All readings are within the limits.'; if (!form.dataset.touched) pass.checked = true; }
+  },
+  rcdTest(form) {
+    const fd = formData(form), ev = evalRcd(W.rcd, fd), v = $('#verdict', form);
+    if (ev.fail.length) { v.className = 'verdict fail'; v.textContent = 'Fail: ' + ev.fail.join('; ') + '.'; }
+    else if (ev.done) { v.className = 'verdict pass'; v.textContent = ev.timed ? `Pass. Trip time is within ${rcdLimit(W.rcd)} ms.` : 'Pass on the push-button test. No trip time recorded.'; }
+    else { v.className = 'verdict'; v.textContent = 'Record a push-button test, a trip time, or both.'; }
+  },
+  cert(form, e) {
+    if (!e || e.target.name !== 'type') return;
+    const t = e.target.value, st = $('#f-statement', form);
+    $('#certHint', form).textContent = CERT_HINT[t];
+    if (Object.values(STATEMENT).includes(st.value.trim()) || !st.value.trim()) st.value = STATEMENT[t];
+  },
+};
+const change = {
+  siteSel(el) { const box = $('#newSite'), v = el.value, show = v === '__new' || v.endsWith('|__new'); box.hidden = !show; $('#newClientWrap').hidden = v !== '__new'; if (show) (v === '__new' ? $('#f-newClient') : $('#f-newSite')).focus(); },
+  envSel(el) {
+    const form = el.closest('form'), e = envOf($('#f-env', form).value);
+    if ($('#f-interval', form)) $('#f-interval', form).value = e.m;
+    if ($('#f-pushMonths', form)) { const port = $('#f-kind', form).value === 'portable'; $('#f-pushMonths', form).value = port ? e.pp : e.pf; $('#f-timeMonths', form).value = port ? e.tp : e.tf; }
+  },
+  fltSite(el) { S.filter.site = el.value; render(); },
+  certPick(el) { const c = clientOf(el.value), form = el.closest('form'); if (!c) return; $('#f-clientName', form).value = c.name; $('#f-clientAddress', form).value = c.address || ''; if (!$('#f-siteAddress', form).value) $('#f-siteAddress', form).value = (c.sites[0] && c.sites[0].address) || c.address || ''; },
+  logo(el) { loadLogo(el.files[0]); },
+  restore(el) {
+    const file = el.files[0]; if (!file) return;
+    const fr = new FileReader();
+    fr.onload = () => {
+      let d; try { d = JSON.parse(fr.result); } catch (e) { d = null; }
+      const names = ['clients', 'items', 'rcds', 'certs'];
+      if (!d || !names.some(n => Array.isArray(d[n]))) { toast('That is not a Tagbook backup file.'); return; }
+      const n = names.reduce((t, k) => t + (Array.isArray(d[k]) ? d[k].length : 0), 0);
+      confirmBox(`Restore ${n} record${n === 1 ? '' : 's'} and the business details from this backup?`, 'Restore', async () => {
+        for (const k of names) for (const x of (Array.isArray(d[k]) ? d[k] : [])) {
+          if (!x || !x.id) continue;
+          const i = S[k].findIndex(y => y.id === x.id); if (i < 0) S[k].push(x); else S[k][i] = x;
+          if (Store.mode === 'cloud') { Store.write(k, x.id, x); await Store.queue[k + '/' + x.id]; }
+        }
+        if (Store.mode === 'local') names.forEach(k => Store.write(k, '', null));
+        if (d.settings && typeof d.settings === 'object') { S.settings = Object.assign(clone(DEFAULTS), d.settings, { id: 'settings' }); S.settings.lim = Object.assign(clone(DEFAULTS.lim), d.settings.lim || {}); saveSettings(); }
+        render(); toast('Backup restored');
+      });
+    };
+    fr.readAsText(file);
+  },
+};
+
+/* ---------- wiring ---------- */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el || el.disabled) return;
+  const fn = act[el.dataset.act]; if (fn) fn(el.dataset, el, e);
+});
+document.addEventListener('submit', e => {
+  const form = e.target.closest('form[data-submit]'); if (!form) return;
+  e.preventDefault(); formErr(form, '');
+  const fn = submit[form.dataset.submit]; if (fn) fn(formData(form), form, e.submitter ? e.submitter.value : '');
+});
+document.addEventListener('input', e => {
+  if (e.target.dataset.input === 'fltQ') { S.filter.q = e.target.value; tagList(); return; }
+  const form = e.target.closest('form[data-live]'); if (form && live[form.dataset.live]) live[form.dataset.live](form, e);
+});
+document.addEventListener('change', e => {
+  const k = e.target.dataset.change; if (k && change[k]) change[k](e.target);
+  const form = e.target.closest('form[data-live]'); if (form && live[form.dataset.live] && e.target.type !== 'text') live[form.dataset.live](form, e);
+});
+$('#sheet').addEventListener('close', () => { W = {}; });
+document.addEventListener('visibilitychange', async () => {
+  if (document.hidden || Store.mode !== 'cloud' || Store.pending || $('#sheet').open || Date.now() - Store.lastLoad < 60000) return;
+  try { await Store.loadAll(); render(); } catch (e) { /* keep what is on screen */ }
+});
+
+async function start() {
+  render();
+  await Store.init();
+  try { await Store.loadAll(); } catch (e) { Store.failed = true; toast('Your records could not be loaded. Check your connection and reopen the app.'); }
+  S.ready = true; syncUI(); render();
+}
+if (!window.claude && (location.protocol === 'https:' || location.hostname === 'localhost') && 'serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+window.__tagbook = { S, Store, buildCertPdf, buildSitePdf, itemsCsv, rcdsCsv, evalItem, evalRcd, addMonths };
+start();
+})();
+
+</script>
+</body>
+</html>
